@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation } from 'rover';
+import { ControlLoop, Simulation } from '../../rover/dist';
 import LatLon from 'geodesy/latlon-spherical'
 import LatLonSpherical from "geodesy/latlon-spherical";
 import {SensorValues} from "rover";
@@ -206,4 +206,17 @@ window.addEventListener('keyup', (e) => {
       controlValues[key as keyof typeof controlValues] = 0
     }
   })
+})
+
+let simulationState: 'running' | 'stopped' = 'running';
+window.addEventListener('keypress', e => {
+  if (e.code === 'KeyP') {
+    if (simulationState === 'running') {
+      simulation?.stop()
+      simulationState = 'stopped'
+    } else if (simulationState === 'stopped') {
+      simulation?.start()
+      simulationState = 'running'
+    }
+  }
 })
