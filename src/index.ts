@@ -163,7 +163,6 @@ const loop: ControlLoop = (sensorData, {engines}) => {
       nVelocity: nVelocity + ' m/s',
       nAcceleration: nAcceleration * 100 + ' cm/s^2',
       distanceToDestination: distanceToDestination + 'm',
-      controlValues: JSON.stringify(controlValues),
       engines: JSON.stringify(engines),
       timeDelta: timeDelta + '',
       destination: destinations[currentDestinationIndex].label,
