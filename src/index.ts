@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation } from '../../rover/dist';
+import { ControlLoop, Simulation } from 'rover';
 import LatLon from 'geodesy/latlon-spherical'
 import LatLonSpherical from "geodesy/latlon-spherical";
 import {SensorValues} from "rover";
