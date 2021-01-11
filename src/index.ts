@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL1 } from "rover";
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0 } from "rover";
 import LatLon from "geodesy/latlon-spherical";
 import LatLonSpherical from "geodesy/latlon-spherical";
 import { SensorValues } from "rover";
@@ -104,20 +104,6 @@ const velocityGraph = new Graph(
   }
 );
 
-const headingGraph = new Graph(
-  { id: "heading", width: 800, height: 400 },
-  {
-    heading: {
-      color: "#ff0",
-      range: [0, 360],
-    },
-    nHeading: {
-      color: "#f0f",
-      range: [0, 360],
-    },
-  }
-);
-
 let currentDestinationIndex = 0;
 
 const loop: ControlLoop = (sensorData, { engines }) => {
@@ -194,11 +180,6 @@ const loop: ControlLoop = (sensorData, { engines }) => {
     timeDelta,
   });
 
-  headingGraph.next({
-    heading: (heading + 180) % 360,
-    nHeading: (nOrientation + 180) % 360,
-  });
-
   return {
     engines,
     debug: {
@@ -226,7 +207,7 @@ simulation = new Simulation({
     width: 800,
     height: 800,
   },
-  physicalConstraints: AUTHENTICITY_LEVEL1,
+  physicalConstraints: AUTHENTICITY_LEVEL0,
 });
 
 simulation.start();
