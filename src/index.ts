@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation } from '../../rover/dist';
+import { ControlLoop, Simulation } from 'rover';
 import LatLon from 'geodesy/latlon-spherical'
 import LatLonSpherical from "geodesy/latlon-spherical";
 import {SensorValues} from "rover";
@@ -9,6 +9,11 @@ import LatLong from "geodesy/latlon-spherical";
 
 
 const destinations = [
+  // {
+  //   latitude: 52.48970703639255,
+  //   longitude: 13.395281227289209,
+  //   label: 'A 1407m'
+  // }
   {
     latitude: 52.47880703639255,
     longitude: 13.395281227289209,
