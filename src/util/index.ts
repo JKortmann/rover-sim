@@ -6,6 +6,7 @@ import { harmonicMean } from './harmonicMean';
 import { arithmeticMean } from './arithmeticMean';
 import { geometricMean } from './geometricMean';
 import { clamp } from './clamp';
+import { averageAngle } from './averageAngle';
 
 export {
 	getEngineForceToTravelDistance,
@@ -16,4 +17,5 @@ export {
 	arithmeticMean,
 	geometricMean,
 	clamp,
+	averageAngle,
 };

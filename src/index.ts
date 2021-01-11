@@ -42,7 +42,7 @@ const controlValues = {
 };
 
 let iteration = 0;
-const sensorDataBuffer = new Buffer<SensorValues>(5);
+const sensorDataBuffer = new Buffer<SensorValues>(10);
 
 let nOrientation = 0;
 
@@ -108,11 +108,11 @@ const headingGraph = new Graph(
 	{
 		heading: {
 			color: '#ff0',
-			range: [0, 360],
+			range: [160, 200],
 		},
 		nHeading: {
 			color: '#f0f',
-			range: [0, 360],
+			range: [160, 200],
 		},
 	}
 );
