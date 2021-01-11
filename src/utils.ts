@@ -22,10 +22,8 @@ export const turnVehicle = (turnDegree: number): number[] => {
     }
 };
 
-const ignoreDeadVoltage = (value: number) => {
-    const mappedValue = (Math.abs(value) / 2) + 0.5
-
-    return mappedValue * (value < 0 ? -1 : 1)
+const mapEngineValues = (value: number) => {
+    return ((Math.abs(value) / 2) + 0.5) * (value < 0 ? -1 : 1)
 };
 
 export const getEngineForceToTravelDistance = (
@@ -35,10 +33,7 @@ export const getEngineForceToTravelDistance = (
     if (distanceToLOI > 30) {
         return 1;
     }
-
-    const engineValue = ignoreDeadVoltage(
-        Math.tanh(distanceToLOI - speed * (speed / 2))
+    return mapEngineValues(
+      Math.tanh(distanceToLOI - speed * (speed / 2))
     );
-
-    return engineValue;
 };
