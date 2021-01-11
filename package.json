@@ -22,7 +22,6 @@
   "dependencies": {
     "@types/geodesy": "^2.2.2",
     "geodesy": "^2.2.1",
-    "rover": "github:davidlinner/rover",
-    "rxjs": "^6.6.3"
+    "rover": "github:davidlinner/rover"
   }
 }
