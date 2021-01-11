@@ -1,9 +1,9 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0 } from '../../rover/dist';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0 } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 import LatLonSpherical from 'geodesy/latlon-spherical';
 import { SensorValues } from 'rover';
 import { Buffer } from './Buffer';
-import { Display } from "./Display";
+import { Display } from './Display';
 import { Graph } from './Graph';
 import LatLong from 'geodesy/latlon-spherical';
 import {
@@ -85,8 +85,7 @@ accelerationBuffer.subscribe((values) => {
 let lastClock = 0;
 let lastPosition: LatLonSpherical | null = null;
 
-
-const display = new Display({width: 800, height: 200});
+const display = new Display({ width: 800, height: 200 });
 const velocityGraph = new Graph(
 	{ width: 800, height: 100 },
 	{
@@ -183,7 +182,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 		engines: JSON.stringify(engines),
 		timeDelta: timeDelta + '',
 		destination: destinations[currentDestinationIndex].label,
-	})
+	});
 
 	return { engines };
 };
