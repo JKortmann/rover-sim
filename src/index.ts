@@ -5,7 +5,7 @@ import { SensorValues } from "rover";
 import { Buffer } from "./Buffer";
 import {
   harmonicMean,
-  geometricMean,
+  averageAngle,
   clamp,
   signedAngleDifference,
   getEngineForceToTravelDistance,
@@ -69,7 +69,7 @@ sensorDataBuffer.subscribe((values) => {
 
   velocityBuffer.push(velocity);
   accelerationBuffer.push(acceleration);
-  nOrientation = geometricMean(values.map((value) => value.heading));
+  nOrientation = averageAngle(values.map((value) => value.heading));
 });
 
 // Prefix "n" for normalized
@@ -142,7 +142,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
   const desiredOrientation =
     360 - position.initialBearingTo(destinationPosition);
   const desiredOrientationDelta = signedAngleDifference(
-    heading,
+    nOrientation,
     desiredOrientation
   );
 

@@ -18,6 +18,16 @@ export const arethmeticMean = (values: number[]) => {
   return values.reduce((acc, v) => acc + v, 0) / values.length;
 };
 
+export const averageAngle = (values: number[]) => {
+  let x = 0;
+  let y = 0;
+  values.forEach((v) => {
+    x += Math.cos(v);
+    y += Math.sin(v);
+  });
+  return Math.atan2(y, x);
+};
+
 export const harmonicMean = (values: number[]) => {
   return (
     values.length /
