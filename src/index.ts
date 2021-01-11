@@ -151,7 +151,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
     }
   }
 
-  updateControlsValuesFromGamepad();
+  updateControlValuesFromGamepad();
   // If any steering overrides are happening
   if (Object.values(controlValues).some((v) => v !== 0)) {
     engines = [0, 0];
@@ -251,7 +251,7 @@ window.addEventListener("gamepadconnected", (event ) => {
   console.log("Gamepad connected " + (event as any)?.gamepad?.id);
 });
 
-function updateControlsValuesFromGamepad() {
+function updateControlValuesFromGamepad() {
   const gamepad = navigator.getGamepads()?.[0];
   const buttons = gamepad?.buttons;
   const aButtonPressed = buttons?.[0]?.pressed;
