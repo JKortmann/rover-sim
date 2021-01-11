@@ -1,12 +1,18 @@
-import { ControlLoop, Simulation } from 'rover';
-import LatLon from 'geodesy/latlon-spherical'
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL1 } from "rover";
+import LatLon from "geodesy/latlon-spherical";
 import LatLonSpherical from "geodesy/latlon-spherical";
-import {SensorValues} from "rover";
-import {Buffer} from './Buffer';
-import {harmonicMean, clamp, signedAngleDifference, getEngineForceToTravelDistance, turnVehicle} from './utils';
-import {Graph} from './Graph';
+import { SensorValues } from "rover";
+import { Buffer } from "./Buffer";
+import {
+  harmonicMean,
+  geometricMean,
+  clamp,
+  signedAngleDifference,
+  getEngineForceToTravelDistance,
+  turnVehicle,
+} from "./utils";
+import { Graph } from "./Graph";
 import LatLong from "geodesy/latlon-spherical";
-
 
 const destinations = [
   // {
@@ -38,9 +44,10 @@ const controlValues = {
 let iteration = 0;
 const sensorDataBuffer = new Buffer<SensorValues>(5);
 
+let nOrientation = 0;
+
 const velocityBuffer = new Buffer<number>(5);
 const accelerationBuffer = new Buffer<number>(5);
-const orientationBuffer = new Buffer<number>(5);
 
 sensorDataBuffer.subscribe((values) => {
   const curr = values[0];
@@ -49,10 +56,12 @@ sensorDataBuffer.subscribe((values) => {
   const timeDelta = curr.clock - (prev?.clock || 0);
 
   const position = new LatLon(curr.location.latitude, curr.location.longitude);
-  const lastPosition = prev ? new LatLon(prev.location.latitude, prev.location.longitude) : position;
+  const lastPosition = prev
+    ? new LatLon(prev.location.latitude, prev.location.longitude)
+    : position;
   const positionDelta = position.distanceTo(lastPosition);
 
-  const velocity = positionDelta / (timeDelta / 1000) // in m/s
+  const velocity = positionDelta / (timeDelta / 1000); // in m/s
   const lastVelocity = velocityBuffer.item(0) || velocity;
   const velocityDelta = velocity - lastVelocity;
 
@@ -60,69 +69,91 @@ sensorDataBuffer.subscribe((values) => {
 
   velocityBuffer.push(velocity);
   accelerationBuffer.push(acceleration);
-  orientationBuffer.push(curr.heading);
+  nOrientation = geometricMean(values.map((value) => value.heading));
 });
 
 // Prefix "n" for normalized
 let nVelocity = 0;
 velocityBuffer.subscribe((values) => {
-  nVelocity = harmonicMean(values)
-})
+  nVelocity = harmonicMean(values);
+});
 
 let nAcceleration = 0;
-accelerationBuffer.subscribe(values => {
-  nAcceleration = harmonicMean(values)
-})
-
-let nOrientation = 0;
-orientationBuffer.subscribe(values => {
-  nOrientation = harmonicMean(values)
-})
+accelerationBuffer.subscribe((values) => {
+  nAcceleration = harmonicMean(values);
+});
 
 let lastClock = 0;
 let lastPosition: LatLonSpherical | null = null;
 
 const velocityGraph = new Graph(
-  {id: 'velocity', width: 800, height: 100},
+  { id: "velocity", width: 800, height: 100 },
   {
     velocity: {
-      color: '#ff0',
+      color: "#ff0",
       range: [0, 30],
     },
     nVelocity: {
-      color: '#f0f',
+      color: "#f0f",
       range: [0, 30],
     },
     timeDelta: {
-      color: '#0ff',
+      color: "#0ff",
       range: [10, 30],
-    }
+    },
+  }
+);
+
+const headingGraph = new Graph(
+  { id: "heading", width: 800, height: 400 },
+  {
+    heading: {
+      color: "#ff0",
+      range: [0, 360],
+    },
+    nHeading: {
+      color: "#f0f",
+      range: [0, 360],
+    },
   }
 );
 
 let currentDestinationIndex = 0;
 
-const loop: ControlLoop = (sensorData, {engines}) => {
+const loop: ControlLoop = (sensorData, { engines }) => {
   sensorDataBuffer.push(sensorData);
-  const {location: {latitude, longitude}, heading, clock} = sensorData
-  const timeDelta = clock - lastClock
+  const {
+    location: { latitude, longitude },
+    heading,
+    clock,
+  } = sensorData;
+  const timeDelta = clock - lastClock;
 
-  engines = [0, 0]
+  engines = [0, 0];
 
   const currentDestination = destinations[currentDestinationIndex];
-  const destinationPosition = new LatLong(currentDestination.latitude, currentDestination.longitude);
-  const position = new LatLon(latitude, longitude)
+  const destinationPosition = new LatLong(
+    currentDestination.latitude,
+    currentDestination.longitude
+  );
+  const position = new LatLon(latitude, longitude);
   const distanceToDestination = position.distanceTo(destinationPosition);
 
-  const desiredOrientation = 360 - position.initialBearingTo(destinationPosition);
-  const desiredOrientationDelta = signedAngleDifference(heading, desiredOrientation);
+  const desiredOrientation =
+    360 - position.initialBearingTo(destinationPosition);
+  const desiredOrientationDelta = signedAngleDifference(
+    heading,
+    desiredOrientation
+  );
 
   if (Math.round(distanceToDestination) > 0) {
-    engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity));
+    engines = engines.map(() =>
+      getEngineForceToTravelDistance(distanceToDestination, nVelocity)
+    );
   }
 
   if (Math.round(desiredOrientationDelta) !== 0) {
-    engines = turnVehicle(desiredOrientationDelta)
+    engines = turnVehicle(desiredOrientationDelta);
   }
 
   if (Math.round(nVelocity) === 0 && Math.floor(distanceToDestination) === 0) {
@@ -135,29 +166,38 @@ const loop: ControlLoop = (sensorData, {engines}) => {
   }
 
   // If any steering overrides are happening
-  if (Object.values(controlValues).some(v => v !== 0)) {
-    engines = [0, 0]
+  if (Object.values(controlValues).some((v) => v !== 0)) {
+    engines = [0, 0];
 
-    engines[0] += controlValues.forward
-    engines[1] += controlValues.forward
+    engines[0] += controlValues.forward;
+    engines[1] += controlValues.forward;
 
-    engines[0] -= controlValues.backward
-    engines[1] -= controlValues.backward
+    engines[0] -= controlValues.backward;
+    engines[1] -= controlValues.backward;
 
-    engines[0] -= controlValues.left
-    engines[1] += controlValues.left
+    engines[0] -= controlValues.left;
+    engines[1] += controlValues.left;
 
-    engines[0] += controlValues.right
-    engines[1] -= controlValues.right
+    engines[0] += controlValues.right;
+    engines[1] -= controlValues.right;
 
-    engines = engines.map(v => clamp(v, -1, 1))
+    engines = engines.map((v) => clamp(v, -1, 1));
   }
 
   lastClock = clock;
   lastPosition = position;
   iteration++;
 
-  velocityGraph.next({velocity: velocityBuffer.latest(), nVelocity, timeDelta})
+  velocityGraph.next({
+    velocity: velocityBuffer.latest(),
+    nVelocity,
+    timeDelta,
+  });
+
+  headingGraph.next({
+    heading: (heading + 180) % 360,
+    nHeading: (nOrientation + 180) % 360,
+  });
 
   return {
     engines,
@@ -165,62 +205,62 @@ const loop: ControlLoop = (sensorData, {engines}) => {
       desiredOrientationDelta: desiredOrientationDelta + " deg",
       desiredOrientation: desiredOrientation + " deg",
       orientation: heading + " deg",
-      nVelocity: nVelocity + ' m/s',
-      nAcceleration: nAcceleration * 100 + ' cm/s^2',
-      distanceToDestination: distanceToDestination + 'm',
+      nVelocity: nVelocity + " m/s",
+      nAcceleration: nAcceleration * 100 + " cm/s^2",
+      distanceToDestination: distanceToDestination + "m",
       engines: JSON.stringify(engines),
-      timeDelta: timeDelta + '',
+      timeDelta: timeDelta + "",
       destination: destinations[currentDestinationIndex].label,
-    }
-  }
-}
+    },
+  };
+};
 simulation = new Simulation({
   loop,
   origin: {
-    latitude:52.477050353132384,
-    longitude:13.395281227289209
+    latitude: 52.477050353132384,
+    longitude: 13.395281227289209,
   },
-  element: document.querySelector('main') as HTMLElement,
+  element: document.querySelector("main") as HTMLElement,
   locationsOfInterest: destinations,
   renderingOptions: {
     width: 800,
     height: 800,
   },
+  physicalConstraints: AUTHENTICITY_LEVEL1,
 });
 
 simulation.start();
 
-
 const controlMapping: Record<keyof typeof controlValues, string[]> = {
-  forward: ['KeyW', 'ArrowUp'],
-  backward: ['KeyS', 'ArrowDown'],
-  left: ['KeyA', 'ArrowLeft'],
-  right: ['KeyD', 'ArrowRight'],
-}
-window.addEventListener('keydown', (e) => {
+  forward: ["KeyW", "ArrowUp"],
+  backward: ["KeyS", "ArrowDown"],
+  left: ["KeyA", "ArrowLeft"],
+  right: ["KeyD", "ArrowRight"],
+};
+window.addEventListener("keydown", (e) => {
   Object.entries(controlMapping).forEach(([key, codes]) => {
     if (codes.includes(e.code)) {
-      controlValues[key as keyof typeof controlValues] = 1
+      controlValues[key as keyof typeof controlValues] = 1;
     }
-  })
-})
-window.addEventListener('keyup', (e) => {
+  });
+});
+window.addEventListener("keyup", (e) => {
   Object.entries(controlMapping).forEach(([key, codes]) => {
     if (codes.includes(e.code)) {
-      controlValues[key as keyof typeof controlValues] = 0
+      controlValues[key as keyof typeof controlValues] = 0;
     }
-  })
-})
+  });
+});
 
-let simulationState: 'running' | 'stopped' = 'running';
-window.addEventListener('keypress', e => {
-  if (e.code === 'KeyP') {
-    if (simulationState === 'running') {
-      simulation?.stop()
-      simulationState = 'stopped'
-    } else if (simulationState === 'stopped') {
-      simulation?.start()
-      simulationState = 'running'
+let simulationState: "running" | "stopped" = "running";
+window.addEventListener("keypress", (e) => {
+  if (e.code === "KeyP") {
+    if (simulationState === "running") {
+      simulation?.stop();
+      simulationState = "stopped";
+    } else if (simulationState === "stopped") {
+      simulation?.start();
+      simulationState = "running";
     }
   }
-})
+});
