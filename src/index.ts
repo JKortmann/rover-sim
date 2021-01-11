@@ -3,6 +3,7 @@ import LatLon from 'geodesy/latlon-spherical';
 import LatLonSpherical from 'geodesy/latlon-spherical';
 import { SensorValues } from 'rover';
 import { Buffer } from './Buffer';
+import { Display } from './Display';
 import { Graph } from './Graph';
 import LatLong from 'geodesy/latlon-spherical';
 import {
@@ -84,8 +85,9 @@ accelerationBuffer.subscribe((values) => {
 let lastClock = 0;
 let lastPosition: LatLonSpherical | null = null;
 
+const display = new Display({ width: 800, height: 200 });
 const velocityGraph = new Graph(
-	{ id: 'velocity', width: 800, height: 100 },
+	{ width: 800, height: 100 },
 	{
 		velocity: {
 			color: '#ff0',
@@ -149,9 +151,8 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	if (Math.round(nVelocity) === 0 && Math.floor(distanceToDestination) === 0) {
 		if (currentDestinationIndex < destinations.length - 1) {
 			currentDestinationIndex++;
-			console.log('Reached Destination');
 		} else {
-			console.log('Done with all stops');
+			// We're done!
 		}
 	}
 
@@ -184,25 +185,19 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 		timeDelta,
 	});
 
-	headingGraph.next({
-		heading: (heading + 180) % 360,
-		nHeading: (nOrientation + 180) % 360,
+	display.next({
+		desiredOrientationDelta: desiredOrientationDelta + ' deg',
+		desiredOrientation: desiredOrientation + ' deg',
+		orientation: heading + ' deg',
+		nVelocity: nVelocity + ' m/s',
+		nAcceleration: nAcceleration * 100 + ' cm/s^2',
+		distanceToDestination: distanceToDestination + 'm',
+		engines: JSON.stringify(engines),
+		timeDelta: timeDelta + '',
+		destination: destinations[currentDestinationIndex].label,
 	});
 
-	return {
-		engines,
-		debug: {
-			desiredOrientationDelta: desiredOrientationDelta + ' deg',
-			desiredOrientation: desiredOrientation + ' deg',
-			orientation: heading + ' deg',
-			nVelocity: nVelocity + ' m/s',
-			nAcceleration: nAcceleration * 100 + ' cm/s^2',
-			distanceToDestination: distanceToDestination + 'm',
-			engines: JSON.stringify(engines),
-			timeDelta: timeDelta + '',
-			destination: destinations[currentDestinationIndex].label,
-		},
-	};
+	return { engines };
 };
 simulation = new Simulation({
 	loop,

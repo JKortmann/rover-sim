@@ -3,7 +3,6 @@ import { Buffer } from './Buffer';
 const CANVAS_CONTAINER = document.getElementById('canvasContainer') as HTMLDivElement;
 
 export interface CanvasOptions extends Partial<HTMLCanvasElement> {
-	id: string;
 	width: number;
 	height: number;
 }
