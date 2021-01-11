@@ -3,16 +3,16 @@ import LatLon from "geodesy/latlon-spherical";
 import LatLonSpherical from "geodesy/latlon-spherical";
 import { SensorValues } from "rover";
 import { Buffer } from "./Buffer";
+import { Graph } from "./Graph";
+import LatLong from "geodesy/latlon-spherical";
 import {
   harmonicMean,
   geometricMean,
   clamp,
   signedAngleDifference,
   getEngineForceToTravelDistance,
-  turnVehicle,
-} from "./utils";
-import { Graph } from "./Graph";
-import LatLong from "geodesy/latlon-spherical";
+  turnVehicle
+} from './util'
 
 const destinations = [
   // {
