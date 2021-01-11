@@ -19,13 +19,10 @@ export const arethmeticMean = (values: number[]) => {
 };
 
 export const averageAngle = (values: number[]) => {
-  let x = 0;
-  let y = 0;
-  values.forEach((v) => {
-    x += Math.cos(v);
-    y += Math.sin(v);
+  return values.reduce((acc, v) => {
+    const diff = ((acc - v + 180 + 360) % 360) - 180;
+    return (360 + v + diff / 2) % 360;
   });
-  return Math.atan2(y, x);
 };
 
 export const harmonicMean = (values: number[]) => {
