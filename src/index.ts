@@ -178,11 +178,11 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 		engines[0] -= controlValues.backward;
 		engines[1] -= controlValues.backward;
 
-		engines[0] -= controlValues.left;
-		engines[1] += controlValues.left;
+		engines[0] += controlValues.left;
+		engines[1] -= controlValues.left;
 
-		engines[0] += controlValues.right;
-		engines[1] -= controlValues.right;
+		engines[0] -= controlValues.right;
+		engines[1] += controlValues.right;
 
 		engines = engines.map((v) => clamp(v, -1, 1)) as [number, number];
 	}
