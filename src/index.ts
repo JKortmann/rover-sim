@@ -1,7 +1,6 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0 } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues } from '../../rover/dist';
 import LatLon from 'geodesy/latlon-spherical';
 import LatLonSpherical from 'geodesy/latlon-spherical';
-import { SensorValues } from 'rover';
 import { Buffer } from './Buffer';
 import { Display } from './Display';
 import { Graph } from './Graph';
@@ -30,6 +29,31 @@ const destinations = [
 		latitude: 52.47880703639255,
 		longitude: 13.395681227289209,
 		label: 'B',
+	},
+	{
+		latitude: 52.477050353132384,
+		longitude: 13.395281227289209,
+		label: 'C',
+	},
+	{
+		latitude: 52.477050353132384,
+		longitude: 13.395181227289209,
+		label: 'D',
+	},
+	{
+		latitude: 52.477050353132384,
+		longitude: 13.395381227289209,
+		label: 'E',
+	},
+	{
+		latitude: 52.476950353132384,
+		longitude: 13.395281227289209,
+		label: 'F',
+	},
+	{
+		latitude: 52.477150353132384,
+		longitude: 13.395281227289209,
+		label: 'G',
 	},
 ];
 
@@ -113,6 +137,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 		location: { latitude, longitude },
 		heading,
 		clock,
+		proximity,
 	} = sensorData;
 	const timeDelta = clock - lastClock;
 
@@ -127,11 +152,11 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	const desiredOrientationDelta = signedAngleDifference(heading, desiredOrientation);
 
 	if (Math.round(distanceToDestination) > 0) {
-		engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity));
+		engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [number, number];
 	}
 
 	if (Math.round(desiredOrientationDelta) !== 0) {
-		engines = turnVehicle(desiredOrientationDelta);
+		engines = turnVehicle(desiredOrientationDelta) as [number, number];
 	}
 
 	if (Math.round(nVelocity) === 0 && Math.floor(distanceToDestination) === 0) {
@@ -145,7 +170,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	updateControlValuesFromGamepad();
 	// If any steering overrides are happening
 	if (Object.values(controlValues).some((v) => v !== 0)) {
-		engines = [0, 0];
+		engines = [0, 0] as [number, number];
 
 		engines[0] += controlValues.forward;
 		engines[1] += controlValues.forward;
@@ -159,7 +184,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 		engines[0] += controlValues.right;
 		engines[1] -= controlValues.right;
 
-		engines = engines.map((v) => clamp(v, -1, 1));
+		engines = engines.map((v) => clamp(v, -1, 1)) as [number, number];
 	}
 
 	lastClock = clock;
@@ -173,6 +198,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	});
 
 	display.next({
+		proximity: proximity[0] + 'm',
 		desiredOrientationDelta: desiredOrientationDelta + ' deg',
 		desiredOrientation: desiredOrientation + ' deg',
 		orientation: heading + ' deg',
@@ -198,6 +224,10 @@ simulation = new Simulation({
 		width: 800,
 		height: 800,
 	},
+	obstacles: [
+		{latitude: 52.477250353132384, longitude: 13.395281227289209, radius: 5},
+		{latitude: 52.477280353132384, longitude: 13.395381227289209, radius: 3},
+	],
 	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
 
