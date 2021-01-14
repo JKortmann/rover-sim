@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues, LocationOfInterest } from 'rover'
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues, LocationOfInterest } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 import LatLonSpherical from 'geodesy/latlon-spherical';
 import { Buffer } from './Buffer';
@@ -14,46 +14,46 @@ import {
 	turnVehicle,
 } from './util';
 
-import { Rectangle } from './types'
-import { getPathForScanningRectangle } from './util'
+import { Rectangle } from './types';
+import { getPathForScanningRectangle } from './util';
 
-const debugPosition = new LatLong(52.477050353132384, 13.395281227289209)
+const debugPosition = new LatLong(52.477050353132384, 13.395281227289209);
 const debugRectangle: Rectangle = [
-	new LatLong(52.47707415932714,13.39510403573513),
-	new LatLong(52.47707415932714,13.395281061530113),
-	new LatLong(52.47723419690555,13.395281061530113),
-	new LatLong(52.47723419690555,13.39510403573513),
-]
-const debugDetectionWidth = 2 // in m
+	new LatLong(52.47707415932714, 13.39510403573513),
+	new LatLong(52.47707415932714, 13.395281061530113),
+	new LatLong(52.47723419690555, 13.395281061530113),
+	new LatLong(52.47723419690555, 13.39510403573513),
+];
+const debugDetectionWidth = 2; // in m
 
-const foos = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth)
+const foos = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth);
 
 const destinations: LocationOfInterest[] = [
 	{
 		latitude: 52.47707415932714,
 		longitude: 13.39510403573513,
-		label: 'B'
+		label: 'B',
 	},
 	{
 		latitude: 52.47707415932714,
 		longitude: 13.395281061530113,
-		label: 'A'
+		label: 'A',
 	},
 	{
 		latitude: 52.47723419690555,
 		longitude: 13.395281061530113,
-		label: 'D'
+		label: 'D',
 	},
 	{
 		latitude: 52.47723419690555,
 		longitude: 13.39510403573513,
-		label: 'C'
+		label: 'C',
 	},
-  ...foos.map((point, index) => ({
-    latitude: point.latitude,
-    longitude: point.longitude,
-    label: index.toString(),
-  })),
+	...foos.map((point, index) => ({
+		latitude: point.latitude,
+		longitude: point.longitude,
+		label: index.toString(),
+	})),
 ];
 
 let simulation: Simulation | null;
@@ -151,7 +151,10 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	const desiredOrientationDelta = signedAngleDifference(heading, desiredOrientation);
 
 	if (Math.round(distanceToDestination) > 0) {
-		engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [number, number];
+		engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
+			number,
+			number
+		];
 	}
 
 	if (Math.round(desiredOrientationDelta) !== 0) {
