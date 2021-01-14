@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL1 } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL2 } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 import LatLonSpherical from 'geodesy/latlon-spherical';
 import { SensorValues } from 'rover';
@@ -211,7 +211,7 @@ simulation = new Simulation({
 		width: 800,
 		height: 800,
 	},
-	physicalConstraints: AUTHENTICITY_LEVEL1,
+	physicalConstraints: AUTHENTICITY_LEVEL2,
 });
 
 simulation.start();
