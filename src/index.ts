@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues, LocationOfInterest } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues, LocationOfInterest } from '../../rover/dist';
 import LatLon from 'geodesy/latlon-spherical';
 import { Buffer } from './Buffer';
 import { Display } from './Display';
@@ -12,7 +12,7 @@ import {
 	turnVehicle,
 } from './util';
 
-import { Rectangle } from './types';
+import { Engines, Rectangle, Steering } from './types';
 import { getPathForScanningRectangle } from './util';
 
 const debugPosition = new LatLon(52.477050353132384, 13.395281227289209);
@@ -117,7 +117,7 @@ const velocityGraph = new Graph(
 
 let currentDestinationIndex = 0;
 
-const loop: ControlLoop = (sensorData, { engines }) => {
+const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	sensorDataBuffer.push(sensorData);
 	const {
 		location: { latitude, longitude },
@@ -127,7 +127,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	} = sensorData;
 	const timeDelta = clock - lastClock;
 
-	engines = [0, 0];
+	engines = [0, 0, 0, 0, 0, 0];
 
 	const currentDestination = destinations[currentDestinationIndex];
 	const destinationPosition = new LatLon(currentDestination.latitude, currentDestination.longitude);
@@ -137,16 +137,16 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	const desiredOrientation = position.initialBearingTo(destinationPosition);
 	const desiredOrientationDelta = signedAngleDifference(heading, desiredOrientation);
 
-	if (Math.round(distanceToDestination) > 0) {
-		engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
-			number,
-			number
-		];
-	}
+	// if (Math.round(distanceToDestination) > 0) {
+	// 	engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
+	// 		number,
+	// 		number
+	// 	];
+	// }
 
-	if (Math.round(desiredOrientationDelta) !== 0) {
-		engines = turnVehicle(desiredOrientationDelta) as [number, number];
-	}
+	// if (Math.round(desiredOrientationDelta) !== 0) {
+	// 	engines = turnVehicle(desiredOrientationDelta) as [number, number];
+	// }
 
 	if (Math.round(nVelocity) === 0 && Math.floor(distanceToDestination) === 0) {
 		if (currentDestinationIndex < destinations.length - 1) {
@@ -159,21 +159,20 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	updateControlValuesFromGamepad();
 	// If any steering overrides are happening
 	if (Object.values(controlValues).some((v) => v !== 0)) {
-		engines = [0, 0] as [number, number];
+		const steerAngle = ((controlValues.left - controlValues.right) * 45)
+		engines = [0, 0, 0, 0, 0, 0] as Engines;
+		steering = [0, 0, 0, 0] as Steering;
 
-		engines[0] += controlValues.forward;
-		engines[1] += controlValues.forward;
+		engines = engines.map(e => e + controlValues.forward) as Engines
+		engines = engines.map(e => e - controlValues.backward) as Engines
 
-		engines[0] -= controlValues.backward;
-		engines[1] -= controlValues.backward;
+		steering[0] = 180 - steerAngle
+		steering[1] = 180 - steerAngle
 
-		engines[0] -= controlValues.left;
-		engines[1] += controlValues.left;
+		steering[2] = 180 + steerAngle
+		steering[3] = 180 + steerAngle
 
-		engines[0] += controlValues.right;
-		engines[1] -= controlValues.right;
-
-		engines = engines.map((v) => clamp(v, -1, 1)) as [number, number];
+		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 	}
 
 	lastClock = clock;
@@ -190,19 +189,22 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 		proximity: proximity[0] + 'm',
 		heading,
 		posR: latitude + ', ' + longitude,
-		pos0: destinationPosition.latitude + ', ' + destinationPosition.longitude
+		pos0: destinationPosition.latitude + ', ' + destinationPosition.longitude,
+
 		// desiredOrientationDelta: desiredOrientationDelta + ' deg',
 		// desiredOrientation: desiredOrientation + ' deg',
 		// orientation: heading + ' deg',
 		// nVelocity: nVelocity + ' m/s',
 		// nAcceleration: nAcceleration * 100 + ' cm/s^2',
 		// distanceToDestination: distanceToDestination + 'm',
-		// engines: JSON.stringify(engines),
+		engines: JSON.stringify(engines),
+		steering: JSON.stringify(steering),
+		ctrlV: JSON.stringify(controlValues),
 		// timeDelta: timeDelta + '',
 		// destination: destinations[currentDestinationIndex].label,
 	});
 
-	return { engines };
+	return { engines, steering };
 };
 simulation = new Simulation({
 	loop,
