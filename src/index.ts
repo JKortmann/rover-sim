@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues, LocationOfInterest } from 'rover'
 import LatLon from 'geodesy/latlon-spherical';
 import LatLonSpherical from 'geodesy/latlon-spherical';
 import { Buffer } from './Buffer';
@@ -14,47 +14,46 @@ import {
 	turnVehicle,
 } from './util';
 
-const destinations = [
-	// {
-	//   latitude: 52.48970703639255,
-	//   longitude: 13.395281227289209,
-	//   label: 'A 1407m'
-	// }
+import { Rectangle } from './types'
+import { getPathForScanningRectangle } from './util'
+
+const debugPosition = new LatLong(52.477050353132384, 13.395281227289209)
+const debugRectangle: Rectangle = [
+	new LatLong(52.47707415932714,13.39510403573513),
+	new LatLong(52.47707415932714,13.395281061530113),
+	new LatLong(52.47723419690555,13.395281061530113),
+	new LatLong(52.47723419690555,13.39510403573513),
+]
+const debugDetectionWidth = 2 // in m
+
+const foos = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth)
+
+const destinations: LocationOfInterest[] = [
 	{
-		latitude: 52.47880703639255,
-		longitude: 13.395281227289209,
-		label: 'A',
+		latitude: 52.47707415932714,
+		longitude: 13.39510403573513,
+		label: 'B'
 	},
 	{
-		latitude: 52.47880703639255,
-		longitude: 13.395681227289209,
-		label: 'B',
+		latitude: 52.47707415932714,
+		longitude: 13.395281061530113,
+		label: 'A'
 	},
 	{
-		latitude: 52.477050353132384,
-		longitude: 13.395281227289209,
-		label: 'C',
+		latitude: 52.47723419690555,
+		longitude: 13.395281061530113,
+		label: 'D'
 	},
 	{
-		latitude: 52.477050353132384,
-		longitude: 13.395181227289209,
-		label: 'D',
+		latitude: 52.47723419690555,
+		longitude: 13.39510403573513,
+		label: 'C'
 	},
-	{
-		latitude: 52.477050353132384,
-		longitude: 13.395381227289209,
-		label: 'E',
-	},
-	{
-		latitude: 52.476950353132384,
-		longitude: 13.395281227289209,
-		label: 'F',
-	},
-	{
-		latitude: 52.477150353132384,
-		longitude: 13.395281227289209,
-		label: 'G',
-	},
+  ...foos.map((point, index) => ({
+    latitude: point.latitude,
+    longitude: point.longitude,
+    label: index.toString(),
+  })),
 ];
 
 let simulation: Simulation | null;
@@ -224,10 +223,10 @@ simulation = new Simulation({
 		width: 800,
 		height: 800,
 	},
-	obstacles: [
-		{latitude: 52.477250353132384, longitude: 13.395281227289209, radius: 5},
-		{latitude: 52.477280353132384, longitude: 13.395381227289209, radius: 3},
-	],
+	// obstacles: [
+	// 	{latitude: 52.477250353132384, longitude: 13.395281227289209, radius: 5},
+	// 	{latitude: 52.477280353132384, longitude: 13.395381227289209, radius: 3},
+	// ],
 	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
 
