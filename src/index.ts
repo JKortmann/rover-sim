@@ -24,32 +24,21 @@ const debugRectangle: Rectangle = [
 	new LatLong(52.47723419690555, 13.395281061530113),
 	new LatLong(52.47723419690555, 13.39510403573513),
 ];
+
+const rectangle: LocationOfInterest[] = [
+	...debugRectangle.map((point, index) => ({
+		latitude: point.latitude,
+		longitude: point.longitude,
+		label: `R${index}`,
+	}))
+]
+
 const debugDetectionWidth = 2; // in m
 
-const foos = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth);
+const rectanglePath = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth);
 
 const destinations: LocationOfInterest[] = [
-	{
-		latitude: 52.47707415932714,
-		longitude: 13.39510403573513,
-		label: 'B',
-	},
-	{
-		latitude: 52.47707415932714,
-		longitude: 13.395281061530113,
-		label: 'A',
-	},
-	{
-		latitude: 52.47723419690555,
-		longitude: 13.395281061530113,
-		label: 'D',
-	},
-	{
-		latitude: 52.47723419690555,
-		longitude: 13.39510403573513,
-		label: 'C',
-	},
-	...foos.map((point, index) => ({
+	...rectanglePath.map((point, index) => ({
 		latitude: point.latitude,
 		longitude: point.longitude,
 		label: index.toString(),
@@ -221,7 +210,10 @@ simulation = new Simulation({
 		longitude: 13.395281227289209,
 	},
 	element: document.querySelector('main') as HTMLElement,
-	locationsOfInterest: destinations,
+	locationsOfInterest: [
+		...rectangle,
+		...destinations
+	],
 	renderingOptions: {
 		width: 800,
 		height: 800,

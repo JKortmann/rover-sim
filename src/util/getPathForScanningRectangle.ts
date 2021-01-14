@@ -16,12 +16,14 @@ export const getPathForScanningRectangle = (rectangle: Rectangle, currentLocatio
 	const points: LatLong[] = [];
 
 	for (let i = 1; i <= shortSideSections; i += 2) {
+		const a = pointForLongSide.intermediatePointTo(furthestPoint, i / shortSideSections)
+		const b = closestRectanglePoint.intermediatePointTo(pointForShortSide, i / shortSideSections)
 		if (i % 3 === 0) {
-			points.push(pointForLongSide.intermediatePointTo(furthestPoint, i / shortSideSections));
-			points.push(closestRectanglePoint.intermediatePointTo(pointForShortSide, i / shortSideSections));
+			points.push(a);
+			points.push(b);
 		} else {
-			points.push(closestRectanglePoint.intermediatePointTo(pointForShortSide, i / shortSideSections));
-			points.push(pointForLongSide.intermediatePointTo(furthestPoint, i / shortSideSections));
+			points.push(b);
+			points.push(a);
 		}
 	}
 
