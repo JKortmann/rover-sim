@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues } from '../../rover/dist';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 import LatLonSpherical from 'geodesy/latlon-spherical';
 import { Buffer } from './Buffer';
