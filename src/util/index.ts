@@ -1,3 +1,4 @@
+import { averageAngle } from './averageAngle';
 import { getEngineForceToTravelDistance } from './getEngineForceToTravelDistance';
 import { mapEngineValues } from './mapEngineValues';
 import { turnVehicle } from './turnVehicle';
@@ -6,7 +7,8 @@ import { harmonicMean } from './harmonicMean';
 import { arithmeticMean } from './arithmeticMean';
 import { geometricMean } from './geometricMean';
 import { clamp } from './clamp';
-import { averageAngle } from './averageAngle';
+import { getPathForScanningRectangle } from './getPathForScanningRectangle';
+import { getPointsDistancesAscending } from './getPointsDistancesAscending';
 
 export {
 	getEngineForceToTravelDistance,
@@ -16,6 +18,8 @@ export {
 	harmonicMean,
 	arithmeticMean,
 	geometricMean,
-	clamp,
 	averageAngle,
+	clamp,
+	getPathForScanningRectangle,
+	getPointsDistancesAscending,
 };

@@ -4,7 +4,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
-		"dev": "webpack serve",
+		"dev": "webpack serve --port 1234",
 		"build": "webpack",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
