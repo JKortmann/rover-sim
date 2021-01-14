@@ -1,10 +1,8 @@
 import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues, LocationOfInterest } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
-import LatLonSpherical from 'geodesy/latlon-spherical';
 import { Buffer } from './Buffer';
 import { Display } from './Display';
 import { Graph } from './Graph';
-import LatLong from 'geodesy/latlon-spherical';
 import {
 	harmonicMean,
 	geometricMean,
@@ -17,12 +15,12 @@ import {
 import { Rectangle } from './types';
 import { getPathForScanningRectangle } from './util';
 
-const debugPosition = new LatLong(52.477050353132384, 13.395281227289209);
+const debugPosition = new LatLon(52.477050353132384, 13.395281227289209);
 const debugRectangle: Rectangle = [
-	new LatLong(52.47707415932714, 13.39510403573513),
-	new LatLong(52.47707415932714, 13.395281061530113),
-	new LatLong(52.47723419690555, 13.395281061530113),
-	new LatLong(52.47723419690555, 13.39510403573513),
+	new LatLon(52.47707415932714, 13.39510403573513),
+	new LatLon(52.47707415932714, 13.395281061530113),
+	new LatLon(52.47723419690555, 13.395281061530113),
+	new LatLon(52.47723419690555, 13.39510403573513),
 ];
 
 const rectangle: LocationOfInterest[] = [
@@ -33,7 +31,7 @@ const rectangle: LocationOfInterest[] = [
 	}))
 ]
 
-const debugDetectionWidth = 2; // in m
+const debugDetectionWidth = .25; // in m
 
 const rectanglePath = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth);
 
@@ -95,7 +93,7 @@ accelerationBuffer.subscribe((values) => {
 });
 
 let lastClock = 0;
-let lastPosition: LatLonSpherical | null = null;
+let lastPosition: LatLon | null = null;
 
 const display = new Display({ width: 800, height: 200 });
 const velocityGraph = new Graph(
@@ -132,11 +130,11 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	engines = [0, 0];
 
 	const currentDestination = destinations[currentDestinationIndex];
-	const destinationPosition = new LatLong(currentDestination.latitude, currentDestination.longitude);
+	const destinationPosition = new LatLon(currentDestination.latitude, currentDestination.longitude);
 	const position = new LatLon(latitude, longitude);
 	const distanceToDestination = position.distanceTo(destinationPosition);
 
-	const desiredOrientation = 360 - position.initialBearingTo(destinationPosition);
+	const desiredOrientation = position.initialBearingTo(destinationPosition);
 	const desiredOrientationDelta = signedAngleDifference(heading, desiredOrientation);
 
 	if (Math.round(distanceToDestination) > 0) {
@@ -190,15 +188,18 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 
 	display.next({
 		proximity: proximity[0] + 'm',
-		desiredOrientationDelta: desiredOrientationDelta + ' deg',
-		desiredOrientation: desiredOrientation + ' deg',
-		orientation: heading + ' deg',
-		nVelocity: nVelocity + ' m/s',
-		nAcceleration: nAcceleration * 100 + ' cm/s^2',
-		distanceToDestination: distanceToDestination + 'm',
-		engines: JSON.stringify(engines),
-		timeDelta: timeDelta + '',
-		destination: destinations[currentDestinationIndex].label,
+		heading,
+		posR: latitude + ', ' + longitude,
+		pos0: destinationPosition.latitude + ', ' + destinationPosition.longitude
+		// desiredOrientationDelta: desiredOrientationDelta + ' deg',
+		// desiredOrientation: desiredOrientation + ' deg',
+		// orientation: heading + ' deg',
+		// nVelocity: nVelocity + ' m/s',
+		// nAcceleration: nAcceleration * 100 + ' cm/s^2',
+		// distanceToDestination: distanceToDestination + 'm',
+		// engines: JSON.stringify(engines),
+		// timeDelta: timeDelta + '',
+		// destination: destinations[currentDestinationIndex].label,
 	});
 
 	return { engines };
@@ -218,10 +219,10 @@ simulation = new Simulation({
 		width: 800,
 		height: 800,
 	},
-	// obstacles: [
-	// 	{latitude: 52.477250353132384, longitude: 13.395281227289209, radius: 5},
-	// 	{latitude: 52.477280353132384, longitude: 13.395381227289209, radius: 3},
-	// ],
+	obstacles: [
+		{latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5},
+		{latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5},
+	],
 	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
 
