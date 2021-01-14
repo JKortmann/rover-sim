@@ -1,10 +1,8 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues, LocationOfInterest } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
-import LatLonSpherical from 'geodesy/latlon-spherical';
 import { Buffer } from './Buffer';
 import { Display } from './Display';
 import { Graph } from './Graph';
-import LatLong from 'geodesy/latlon-spherical';
 import {
 	harmonicMean,
 	geometricMean,
@@ -14,47 +12,35 @@ import {
 	turnVehicle,
 } from './util';
 
-const destinations = [
-	// {
-	//   latitude: 52.48970703639255,
-	//   longitude: 13.395281227289209,
-	//   label: 'A 1407m'
-	// }
-	{
-		latitude: 52.47880703639255,
-		longitude: 13.395281227289209,
-		label: 'A',
-	},
-	{
-		latitude: 52.47880703639255,
-		longitude: 13.395681227289209,
-		label: 'B',
-	},
-	{
-		latitude: 52.477050353132384,
-		longitude: 13.395281227289209,
-		label: 'C',
-	},
-	{
-		latitude: 52.477050353132384,
-		longitude: 13.395181227289209,
-		label: 'D',
-	},
-	{
-		latitude: 52.477050353132384,
-		longitude: 13.395381227289209,
-		label: 'E',
-	},
-	{
-		latitude: 52.476950353132384,
-		longitude: 13.395281227289209,
-		label: 'F',
-	},
-	{
-		latitude: 52.477150353132384,
-		longitude: 13.395281227289209,
-		label: 'G',
-	},
+import { Rectangle } from './types';
+import { getPathForScanningRectangle } from './util';
+
+const debugPosition = new LatLon(52.477050353132384, 13.395281227289209);
+const debugRectangle: Rectangle = [
+	new LatLon(52.47707415932714, 13.39510403573513),
+	new LatLon(52.47707415932714, 13.395281061530113),
+	new LatLon(52.47723419690555, 13.395281061530113),
+	new LatLon(52.47723419690555, 13.39510403573513),
+];
+
+const rectangle: LocationOfInterest[] = [
+	...debugRectangle.map((point, index) => ({
+		latitude: point.latitude,
+		longitude: point.longitude,
+		label: `R${index}`,
+	}))
+]
+
+const debugDetectionWidth = .25; // in m
+
+const rectanglePath = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth);
+
+const destinations: LocationOfInterest[] = [
+	...rectanglePath.map((point, index) => ({
+		latitude: point.latitude,
+		longitude: point.longitude,
+		label: index.toString(),
+	})),
 ];
 
 let simulation: Simulation | null;
@@ -107,7 +93,7 @@ accelerationBuffer.subscribe((values) => {
 });
 
 let lastClock = 0;
-let lastPosition: LatLonSpherical | null = null;
+let lastPosition: LatLon | null = null;
 
 const display = new Display({ width: 800, height: 200 });
 const velocityGraph = new Graph(
@@ -144,15 +130,18 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	engines = [0, 0];
 
 	const currentDestination = destinations[currentDestinationIndex];
-	const destinationPosition = new LatLong(currentDestination.latitude, currentDestination.longitude);
+	const destinationPosition = new LatLon(currentDestination.latitude, currentDestination.longitude);
 	const position = new LatLon(latitude, longitude);
 	const distanceToDestination = position.distanceTo(destinationPosition);
 
-	const desiredOrientation = 360 - position.initialBearingTo(destinationPosition);
+	const desiredOrientation = position.initialBearingTo(destinationPosition);
 	const desiredOrientationDelta = signedAngleDifference(heading, desiredOrientation);
 
 	if (Math.round(distanceToDestination) > 0) {
-		engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [number, number];
+		engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
+			number,
+			number
+		];
 	}
 
 	if (Math.round(desiredOrientationDelta) !== 0) {
@@ -199,15 +188,18 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 
 	display.next({
 		proximity: proximity[0] + 'm',
-		desiredOrientationDelta: desiredOrientationDelta + ' deg',
-		desiredOrientation: desiredOrientation + ' deg',
-		orientation: heading + ' deg',
-		nVelocity: nVelocity + ' m/s',
-		nAcceleration: nAcceleration * 100 + ' cm/s^2',
-		distanceToDestination: distanceToDestination + 'm',
-		engines: JSON.stringify(engines),
-		timeDelta: timeDelta + '',
-		destination: destinations[currentDestinationIndex].label,
+		heading,
+		posR: latitude + ', ' + longitude,
+		pos0: destinationPosition.latitude + ', ' + destinationPosition.longitude
+		// desiredOrientationDelta: desiredOrientationDelta + ' deg',
+		// desiredOrientation: desiredOrientation + ' deg',
+		// orientation: heading + ' deg',
+		// nVelocity: nVelocity + ' m/s',
+		// nAcceleration: nAcceleration * 100 + ' cm/s^2',
+		// distanceToDestination: distanceToDestination + 'm',
+		// engines: JSON.stringify(engines),
+		// timeDelta: timeDelta + '',
+		// destination: destinations[currentDestinationIndex].label,
 	});
 
 	return { engines };
@@ -219,14 +211,17 @@ simulation = new Simulation({
 		longitude: 13.395281227289209,
 	},
 	element: document.querySelector('main') as HTMLElement,
-	locationsOfInterest: destinations,
+	locationsOfInterest: [
+		...rectangle,
+		...destinations
+	],
 	renderingOptions: {
 		width: 800,
 		height: 800,
 	},
 	obstacles: [
-		{latitude: 52.477250353132384, longitude: 13.395281227289209, radius: 5},
-		{latitude: 52.477280353132384, longitude: 13.395381227289209, radius: 3},
+		{latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5},
+		{latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5},
 	],
 	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
