@@ -160,7 +160,7 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	updateControlValuesFromGamepad();
 	// If any steering overrides are happening
 	if (Object.values(controlValues).some((v) => v !== 0)) {
-		const MAX_STEERING_DEGREE = 20
+		const MAX_STEERING_DEGREE = 30
 		const steerAngle = ((controlValues.left - controlValues.right) * MAX_STEERING_DEGREE)
 		engines = [0, 0, 0, 0, 0, 0] as Engines;
 		steering = [180, 180, 180, 180] as Steering;
