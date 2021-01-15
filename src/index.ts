@@ -127,7 +127,8 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	} = sensorData;
 	const timeDelta = clock - lastClock;
 
-	engines = [0, 0, 0, 0, 0, 0];
+	engines = [0, 0, 0, 0, 0, 0] as Engines
+	steering = [180, 180, 180, 180] as Steering
 
 	const currentDestination = destinations[currentDestinationIndex];
 	const destinationPosition = new LatLon(currentDestination.latitude, currentDestination.longitude);
@@ -159,9 +160,10 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	updateControlValuesFromGamepad();
 	// If any steering overrides are happening
 	if (Object.values(controlValues).some((v) => v !== 0)) {
-		const steerAngle = ((controlValues.left - controlValues.right) * 45)
+		const MAX_STEERING_DEGREE = 20
+		const steerAngle = ((controlValues.left - controlValues.right) * MAX_STEERING_DEGREE)
 		engines = [0, 0, 0, 0, 0, 0] as Engines;
-		steering = [0, 0, 0, 0] as Steering;
+		steering = [180, 180, 180, 180] as Steering;
 
 		engines = engines.map(e => e + controlValues.forward) as Engines
 		engines = engines.map(e => e - controlValues.backward) as Engines
