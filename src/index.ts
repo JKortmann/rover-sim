@@ -56,6 +56,7 @@ let iteration = 0;
 const sensorDataBuffer = new Buffer<SensorValues>(10);
 
 let nOrientation = 0;
+let nLocation: LatLon;
 
 const velocityBuffer = new Buffer<number>(5);
 const accelerationBuffer = new Buffer<number>(5);
@@ -79,6 +80,10 @@ sensorDataBuffer.subscribe((values) => {
 	velocityBuffer.push(velocity);
 	accelerationBuffer.push(acceleration);
 	nOrientation = averageAngle(values.map((value) => value.heading));
+
+	const avrgLat = harmonicMean(values.map((value) => value.location.latitude));
+	const avrgLong = harmonicMean(values.map((value) => value.location.longitude));
+	nLocation = new LatLon(avrgLat, avrgLong);
 });
 
 // Prefix "n" for normalized
@@ -118,13 +123,9 @@ const velocityGraph = new Graph(
 const headingGraph = new Graph(
 	{ id: 'heading', width: 800, height: 400 },
 	{
-		heading: {
+		desiredOrientationDelta: {
 			color: '#ff0',
-			range: [160, 200],
-		},
-		nHeading: {
-			color: '#f0f',
-			range: [160, 200],
+			range: [-40, 40],
 		},
 	}
 );
@@ -146,10 +147,10 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 	const currentDestination = destinations[currentDestinationIndex];
 	const destinationPosition = new LatLon(currentDestination.latitude, currentDestination.longitude);
 	const position = new LatLon(latitude, longitude);
-	const distanceToDestination = position.distanceTo(destinationPosition);
+	const distanceToDestination = nLocation.distanceTo(destinationPosition);
 
-	const desiredOrientation = position.initialBearingTo(destinationPosition);
-	const desiredOrientationDelta = signedAngleDifference(heading, desiredOrientation);
+	const desiredOrientation = nLocation.initialBearingTo(destinationPosition);
+	const desiredOrientationDelta = signedAngleDifference(nOrientation, desiredOrientation);
 
 	if (Math.round(distanceToDestination) > 0) {
 		engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
@@ -158,7 +159,7 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 		];
 	}
 
-	if (Math.round(desiredOrientationDelta) !== 0) {
+	if (Math.abs(desiredOrientationDelta) > 1) {
 		engines = turnVehicle(desiredOrientationDelta) as [number, number];
 	}
 
@@ -199,20 +200,24 @@ const loop: ControlLoop = (sensorData, { engines }) => {
 		timeDelta,
 	});
 
+	headingGraph.next({
+		desiredOrientationDelta: desiredOrientationDelta,
+	});
+
 	display.next({
 		proximity: proximity[0] + 'm',
-		heading,
-		posR: latitude + ', ' + longitude,
-		pos0: destinationPosition.latitude + ', ' + destinationPosition.longitude,
-		// desiredOrientationDelta: desiredOrientationDelta + ' deg',
-		// desiredOrientation: desiredOrientation + ' deg',
+		// heading,
+		// posR: latitude + ', ' + longitude,
+		// pos0: destinationPosition.latitude + ', ' + destinationPosition.longitude,
+		desiredOrientationDelta: desiredOrientationDelta + ' deg',
+		desiredOrientation: desiredOrientation + ' deg',
 		// orientation: heading + ' deg',
 		// nVelocity: nVelocity + ' m/s',
 		// nAcceleration: nAcceleration * 100 + ' cm/s^2',
-		// distanceToDestination: distanceToDestination + 'm',
+		distanceToDestination: distanceToDestination + 'm',
 		// engines: JSON.stringify(engines),
 		// timeDelta: timeDelta + '',
-		// destination: destinations[currentDestinationIndex].label,
+		destination: destinations[currentDestinationIndex].label,
 	});
 
 	return { engines };
