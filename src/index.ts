@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, SensorValues, LocationOfInterest } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL1, SensorValues, LocationOfInterest } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 import { Buffer } from './Buffer';
 import { Display } from './Display';
@@ -55,10 +55,10 @@ const controlValues = {
 let iteration = 0;
 const sensorDataBuffer = new Buffer<SensorValues>(5);
 
-let nOrientation = 0;
-
 const velocityBuffer = new Buffer<number>(5);
 const accelerationBuffer = new Buffer<number>(5);
+const positionBuffer = new Buffer<LatLon>(20);
+const orientationBuffer = new Buffer<number>(25);
 
 sensorDataBuffer.subscribe((values) => {
 	const curr = values[0];
@@ -78,7 +78,7 @@ sensorDataBuffer.subscribe((values) => {
 
 	velocityBuffer.push(velocity);
 	accelerationBuffer.push(acceleration);
-	nOrientation = geometricMean(values.map((value) => value.heading));
+	// nOrientation = geometricMean(values.map((value) => value.heading));
 });
 
 // Prefix "n" for normalized
@@ -92,12 +92,24 @@ accelerationBuffer.subscribe((values) => {
 	nAcceleration = harmonicMean(values);
 });
 
+let nPosition = new LatLon(0, 0)
+positionBuffer.subscribe((values => {
+	const nLat = harmonicMean(values.map(value => value.latitude))
+	const nLon = harmonicMean(values.map(value => value.longitude))
+	nPosition = new LatLon(nLat, nLon)
+}))
+
+let nOrientation = 0
+orientationBuffer.subscribe((values => {
+	nOrientation = harmonicMean(values)
+}))
+
 let lastClock = 0;
 let lastPosition: LatLon | null = null;
 
-const display = new Display({ width: 800, height: 200 });
+const display = new Display({ width: 900, height: 200 });
 const velocityGraph = new Graph(
-	{ width: 800, height: 100 },
+	{ width: 900, height: 100 },
 	{
 		velocity: {
 			color: '#ff0',
@@ -115,16 +127,49 @@ const velocityGraph = new Graph(
 	}
 );
 
+const latitudeGraph = new Graph(
+	{ width: 900, height: 100 },
+	{
+		latitude: {
+			color: '#f0f',
+			range: [52.477, 52.478]
+		},
+		nLatitude: {
+			color: '#0ff',
+			range: [52.477, 52.478]
+		}
+	}
+)
+
+const orientationGraph = new Graph(
+	{ width: 900, height: 360 },
+	{
+		orientation: {
+			color: '#f0f',
+			range: [0, 360]
+		},
+		nOrientation: {
+			color: '#0ff',
+			range: [0, 360]
+		}
+	}
+)
+
 let currentDestinationIndex = 0;
 
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	sensorDataBuffer.push(sensorData);
+
 	const {
 		location: { latitude, longitude },
 		heading,
 		clock,
 		proximity,
 	} = sensorData;
+
+	positionBuffer.push(new LatLon(latitude, longitude))
+	orientationBuffer.push(heading)
+
 	const timeDelta = clock - lastClock;
 
 	engines = [0, 0] as Engines
@@ -136,7 +181,7 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	const distanceToDestination = position.distanceTo(destinationPosition);
 
 	const desiredOrientation = position.initialBearingTo(destinationPosition);
-	const desiredOrientationDelta = signedAngleDifference(heading, desiredOrientation);
+	const desiredOrientationDelta = signedAngleDifference(nOrientation, desiredOrientation);
 
 	// if (Math.round(distanceToDestination) > 0) {
 	// 	engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
@@ -184,14 +229,24 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 		timeDelta,
 	});
 
+	latitudeGraph.next({
+		latitude,
+		nLatitude: nPosition.latitude
+	})
+
+	orientationGraph.next({
+		orientation: heading,
+		nOrientation,
+	})
+
 	display.next({
 		proximity: proximity[0] + 'm',
-		heading,
-		posR: latitude + ', ' + longitude,
-		pos0: destinationPosition.latitude + ', ' + destinationPosition.longitude,
+		position: latitude + ', ' + longitude,
+		nPosition: nPosition.latitude + ', ' + nPosition.longitude,
 		desiredOrientationDelta: desiredOrientationDelta + ' deg',
 		desiredOrientation: desiredOrientation + ' deg',
 		orientation: heading + ' deg',
+		nOrientation: nOrientation + ' deg',
 		nVelocity: nVelocity + ' m/s',
 		nAcceleration: nAcceleration * 100 + ' cm/s^2',
 		distanceToDestination: distanceToDestination + 'm',
@@ -223,7 +278,7 @@ simulation = new Simulation({
 		{latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5},
 		{latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5},
 	],
-	physicalConstraints: AUTHENTICITY_LEVEL0,
+	physicalConstraints: AUTHENTICITY_LEVEL1,
 });
 
 simulation.start();
