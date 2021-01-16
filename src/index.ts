@@ -31,7 +31,7 @@ const rectangle: LocationOfInterest[] = [
 	}))
 ]
 
-const debugDetectionWidth = .25; // in m
+const debugDetectionWidth = 1; // in m
 
 const rectanglePath = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth);
 
@@ -127,8 +127,8 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	} = sensorData;
 	const timeDelta = clock - lastClock;
 
-	engines = [0, 0, 0, 0, 0, 0] as Engines
-	steering = [180, 180, 180, 180] as Steering
+	engines = [0, 0] as Engines
+	steering = [180, 180,] as Steering
 
 	const currentDestination = destinations[currentDestinationIndex];
 	const destinationPosition = new LatLon(currentDestination.latitude, currentDestination.longitude);
@@ -160,19 +160,16 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	updateControlValuesFromGamepad();
 	// If any steering overrides are happening
 	if (Object.values(controlValues).some((v) => v !== 0)) {
-		const MAX_STEERING_DEGREE = 30
+		const MAX_STEERING_DEGREE = 10
 		const steerAngle = ((controlValues.left - controlValues.right) * MAX_STEERING_DEGREE)
-		engines = [0, 0, 0, 0, 0, 0] as Engines;
-		steering = [180, 180, 180, 180] as Steering;
+		engines = [0, 0] as Engines;
+		steering = [180, 180] as Steering;
 
 		engines = engines.map(e => e + controlValues.forward) as Engines
 		engines = engines.map(e => e - controlValues.backward) as Engines
 
 		steering[0] = 180 - steerAngle
-		steering[1] = 180 - steerAngle
-
-		steering[2] = 180 + steerAngle
-		steering[3] = 180 + steerAngle
+		steering[1] = 180 + steerAngle
 
 		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 	}
@@ -192,18 +189,17 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 		heading,
 		posR: latitude + ', ' + longitude,
 		pos0: destinationPosition.latitude + ', ' + destinationPosition.longitude,
-
-		// desiredOrientationDelta: desiredOrientationDelta + ' deg',
-		// desiredOrientation: desiredOrientation + ' deg',
-		// orientation: heading + ' deg',
-		// nVelocity: nVelocity + ' m/s',
-		// nAcceleration: nAcceleration * 100 + ' cm/s^2',
-		// distanceToDestination: distanceToDestination + 'm',
+		desiredOrientationDelta: desiredOrientationDelta + ' deg',
+		desiredOrientation: desiredOrientation + ' deg',
+		orientation: heading + ' deg',
+		nVelocity: nVelocity + ' m/s',
+		nAcceleration: nAcceleration * 100 + ' cm/s^2',
+		distanceToDestination: distanceToDestination + 'm',
 		engines: JSON.stringify(engines),
 		steering: JSON.stringify(steering),
 		ctrlV: JSON.stringify(controlValues),
-		// timeDelta: timeDelta + '',
-		// destination: destinations[currentDestinationIndex].label,
+		timeDelta: timeDelta + '',
+		destination: destinations[currentDestinationIndex].label,
 	});
 
 	return { engines, steering };
@@ -220,8 +216,8 @@ simulation = new Simulation({
 		...destinations
 	],
 	renderingOptions: {
-		width: 800,
-		height: 800,
+		width: 900,
+		height: 900,
 	},
 	obstacles: [
 		{latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5},
