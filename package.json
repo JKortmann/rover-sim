@@ -20,7 +20,9 @@
     "webpack-dev-server": "^3.11.2"
   },
   "dependencies": {
+    "@types/chart.js": "^2.9.29",
     "@types/geodesy": "^2.2.2",
+    "chart.js": "^2.9.4",
     "geodesy": "^2.2.1",
     "rover": "github:lscheibel/rover#develop"
   }

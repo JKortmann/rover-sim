@@ -14,6 +14,9 @@ import {
 
 import { Engines, Rectangle, Steering } from './types';
 import { getPathForScanningRectangle } from './util';
+import { geographicMidpointWithoutWeights } from './util/geographicMidpointWithoutWeights';
+import { geographicMidpointWithWeights } from './util/geographicMidpointWithWeights';
+import { Chart } from './Chart';
 
 const debugPosition = new LatLon(52.477050353132384, 13.395281227289209);
 const debugRectangle: Rectangle = [
@@ -57,7 +60,7 @@ const sensorDataBuffer = new Buffer<SensorValues>(5);
 
 const velocityBuffer = new Buffer<number>(5);
 const accelerationBuffer = new Buffer<number>(5);
-const positionBuffer = new Buffer<LatLon>(20);
+const positionBuffer = new Buffer<LatLon>(10);
 const orientationBuffer = new Buffer<number>(25);
 
 sensorDataBuffer.subscribe((values) => {
@@ -91,11 +94,21 @@ accelerationBuffer.subscribe((values) => {
 	nAcceleration = harmonicMean(values);
 });
 
+const tempDistanceBuffer = new Buffer<number>(50);
+
 let nPosition = new LatLon(0, 0);
+let lastNPosition = nPosition;
 positionBuffer.subscribe((values) => {
-	const nLat = harmonicMean(values.map((value) => value.latitude));
-	const nLon = harmonicMean(values.map((value) => value.longitude));
-	nPosition = new LatLon(nLat, nLon);
+	lastNPosition = nPosition;
+	nPosition = geographicMidpointWithoutWeights(values);
+	if (nPositionDeltaChart?.chartjs?.data?.datasets?.[0].data) {
+		const distance = lastNPosition.distanceTo(nPosition);
+		tempDistanceBuffer.push(distance);
+		const maxDistance = Math.max(...tempDistanceBuffer.values);
+		nPositionDeltaChart.chartjs.data.datasets[0].data = [lastNPosition.distanceTo(nPosition)];
+		nPositionDeltaChart.chartjs.data.datasets[1].data = [maxDistance];
+		nPositionDeltaChart.chartjs.update();
+	}
 });
 
 let nOrientation = 0;
@@ -154,6 +167,117 @@ const orientationGraph = new Graph(
 	}
 );
 
+const positionChart = new Chart(
+	{
+		width: 400,
+		height: 400,
+	},
+	{
+		type: 'scatter',
+		data: {
+			datasets: [
+				{
+					label: 'nPosition',
+					backgroundColor: 'red',
+				},
+				{
+					label: 'positions',
+					backgroundColor: 'white',
+				},
+			],
+		},
+		options: {
+			scales: {
+				xAxes: [
+					{
+						type: 'linear',
+						position: 'bottom',
+						ticks: {
+							suggestedMin: 13.39523,
+							suggestedMax: 13.39534,
+						},
+					},
+				],
+				yAxes: [
+					{
+						type: 'linear',
+						position: 'left',
+						ticks: {
+							suggestedMin: 52.47701,
+							suggestedMax: 52.47709,
+						},
+					},
+				],
+			},
+			responsive: false,
+			animation: {
+				duration: 0,
+			},
+			hover: {
+				animationDuration: 0,
+			},
+			responsiveAnimationDuration: 0,
+		},
+	}
+);
+
+const nPositionDeltaChart = new Chart(
+	{
+		height: 400,
+		width: 400,
+	},
+	{
+		type: 'bar',
+		data: {
+			datasets: [
+				{
+					label: 'nPositionDelta',
+					backgroundColor: 'pink',
+				},
+				{
+					label: 'nPositionDelta',
+					backgroundColor: 'transparent',
+					borderColor: 'red',
+					borderWidth: 2,
+				},
+			],
+		},
+		options: {
+			scales: {
+				yAxes: [
+					{
+						type: 'linear',
+						ticks: {
+							max: 2.5,
+							min: 0,
+						},
+						position: 'bottom',
+					},
+				],
+				xAxes: [
+					{
+						id: 'nPositionDelta',
+						stacked: true,
+					},
+					{
+						id: 'nPositionDeltaMax',
+						offset: true,
+						stacked: true,
+					},
+				],
+			},
+			responsive: false,
+			animation: {
+				duration: 0,
+			},
+			hover: {
+				animationDuration: 0,
+			},
+			responsiveAnimationDuration: 0,
+		},
+	}
+);
+
 let currentDestinationIndex = 0;
 
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
@@ -168,6 +292,15 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 
 	positionBuffer.push(new LatLon(latitude, longitude));
 	orientationBuffer.push(heading);
+
+	if (positionChart?.chartjs?.data?.datasets?.[0].data) {
+		positionChart.chartjs.data.datasets[1].data = positionBuffer.values.map((value) => ({
+			x: value.longitude,
+			y: value.latitude,
+		}));
+		positionChart.chartjs.data.datasets[0].data = [{ x: nPosition.longitude, y: nPosition.latitude }];
+		positionChart.chartjs.update();
+	}
 
 	const timeDelta = clock - lastClock;
 
