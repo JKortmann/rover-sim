@@ -1,4 +1,4 @@
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL1, SensorValues, LocationOfInterest } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL2, SensorValues, LocationOfInterest } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 import { Buffer } from './Buffer';
 import { Display } from './Display';
@@ -28,8 +28,8 @@ const rectangle: LocationOfInterest[] = [
 		latitude: point.latitude,
 		longitude: point.longitude,
 		label: `R${index}`,
-	}))
-]
+	})),
+];
 
 const debugDetectionWidth = 1; // in m
 
@@ -66,9 +66,8 @@ sensorDataBuffer.subscribe((values) => {
 
 	const timeDelta = curr.clock - (prev?.clock || 0);
 
-	const position = new LatLon(curr.location.latitude, curr.location.longitude);
-	const lastPosition = prev ? new LatLon(prev.location.latitude, prev.location.longitude) : position;
-	const positionDelta = position.distanceTo(lastPosition);
+	const lastPosition = prev ? new LatLon(prev.location.latitude, prev.location.longitude) : nPosition;
+	const positionDelta = nPosition.distanceTo(lastPosition);
 
 	const velocity = positionDelta / (timeDelta / 1000); // in m/s
 	const lastVelocity = velocityBuffer.item(0) || velocity;
@@ -92,17 +91,17 @@ accelerationBuffer.subscribe((values) => {
 	nAcceleration = harmonicMean(values);
 });
 
-let nPosition = new LatLon(0, 0)
-positionBuffer.subscribe((values => {
-	const nLat = harmonicMean(values.map(value => value.latitude))
-	const nLon = harmonicMean(values.map(value => value.longitude))
-	nPosition = new LatLon(nLat, nLon)
-}))
+let nPosition = new LatLon(0, 0);
+positionBuffer.subscribe((values) => {
+	const nLat = harmonicMean(values.map((value) => value.latitude));
+	const nLon = harmonicMean(values.map((value) => value.longitude));
+	nPosition = new LatLon(nLat, nLon);
+});
 
-let nOrientation = 0
-orientationBuffer.subscribe((values => {
-	nOrientation = harmonicMean(values)
-}))
+let nOrientation = 0;
+orientationBuffer.subscribe((values) => {
+	nOrientation = harmonicMean(values);
+});
 
 let lastClock = 0;
 let lastPosition: LatLon | null = null;
@@ -132,28 +131,28 @@ const latitudeGraph = new Graph(
 	{
 		latitude: {
 			color: '#f0f',
-			range: [52.477, 52.478]
+			range: [52.477, 52.478],
 		},
 		nLatitude: {
 			color: '#0ff',
-			range: [52.477, 52.478]
-		}
+			range: [52.477, 52.478],
+		},
 	}
-)
+);
 
 const orientationGraph = new Graph(
 	{ width: 900, height: 360 },
 	{
 		orientation: {
 			color: '#f0f',
-			range: [0, 360]
+			range: [0, 360],
 		},
 		nOrientation: {
 			color: '#0ff',
-			range: [0, 360]
-		}
+			range: [0, 360],
+		},
 	}
-)
+);
 
 let currentDestinationIndex = 0;
 
@@ -167,13 +166,13 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 		proximity,
 	} = sensorData;
 
-	positionBuffer.push(new LatLon(latitude, longitude))
-	orientationBuffer.push(heading)
+	positionBuffer.push(new LatLon(latitude, longitude));
+	orientationBuffer.push(heading);
 
 	const timeDelta = clock - lastClock;
 
-	engines = [0, 0] as Engines
-	steering = [180, 180,] as Steering
+	engines = [0, 0] as Engines;
+	steering = [180, 180] as Steering;
 
 	const currentDestination = destinations[currentDestinationIndex];
 	const destinationPosition = new LatLon(currentDestination.latitude, currentDestination.longitude);
@@ -184,10 +183,9 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	const desiredOrientationDelta = signedAngleDifference(nOrientation, desiredOrientation);
 
 	// if (Math.round(distanceToDestination) > 0) {
-	// 	engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
-	// 		number,
-	// 		number
-	// 	];
+	// 	const enginePower = getEngineForceToTravelDistance(distanceToDestination, nVelocity);
+	// 	console.log(enginePower);
+	// 	engines = [enginePower, enginePower];
 	// }
 
 	// if (Math.round(desiredOrientationDelta) !== 0) {
@@ -205,16 +203,16 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	updateControlValuesFromGamepad();
 	// If any steering overrides are happening
 	if (Object.values(controlValues).some((v) => v !== 0)) {
-		const MAX_STEERING_DEGREE = 10
-		const steerAngle = ((controlValues.left - controlValues.right) * MAX_STEERING_DEGREE)
+		const MAX_STEERING_DEGREE = 10;
+		const steerAngle = (controlValues.left - controlValues.right) * MAX_STEERING_DEGREE;
 		engines = [0, 0] as Engines;
 		steering = [180, 180] as Steering;
 
-		engines = engines.map(e => e + controlValues.forward) as Engines
-		engines = engines.map(e => e - controlValues.backward) as Engines
+		engines = engines.map((e) => e + controlValues.forward) as Engines;
+		engines = engines.map((e) => e - controlValues.backward) as Engines;
 
-		steering[0] = 180 - steerAngle
-		steering[1] = 180 + steerAngle
+		steering[0] = 180 - steerAngle;
+		steering[1] = 180 + steerAngle;
 
 		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 	}
@@ -231,13 +229,13 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 
 	latitudeGraph.next({
 		latitude,
-		nLatitude: nPosition.latitude
-	})
+		nLatitude: nPosition.latitude,
+	});
 
 	orientationGraph.next({
 		orientation: heading,
 		nOrientation,
-	})
+	});
 
 	display.next({
 		proximity: proximity[0] + 'm',
@@ -266,19 +264,16 @@ simulation = new Simulation({
 		longitude: 13.395281227289209,
 	},
 	element: document.querySelector('main') as HTMLElement,
-	locationsOfInterest: [
-		...rectangle,
-		...destinations
-	],
+	locationsOfInterest: [...rectangle, ...destinations],
 	renderingOptions: {
 		width: 900,
 		height: 900,
 	},
 	obstacles: [
-		{latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5},
-		{latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5},
+		{ latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5 },
+		{ latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5 },
 	],
-	physicalConstraints: AUTHENTICITY_LEVEL1,
+	physicalConstraints: AUTHENTICITY_LEVEL2,
 });
 
 simulation.start();
