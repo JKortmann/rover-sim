@@ -14,6 +14,8 @@ export const getDrivingValues = (DrivingData: DrivingData, engines: Engines, ste
 	engines = [0, 0] as Engines;
 	steering = [180, 180] as Steering;
 
+	// TODO: Implement logic to turn vehicle
+
 	// if (Math.round(distanceToDestination) > 0) {
 	// 	engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
 	// 		number,
@@ -21,9 +23,13 @@ export const getDrivingValues = (DrivingData: DrivingData, engines: Engines, ste
 	// 	];
 	// }
 
+	// TODO: Implement logic to drive vehicle
+
 	// if (Math.round(desiredHeadingDelta) !== 0) {
 	// 	engines = turnVehicle(desiredHeadingDelta) as [number, number];
 	// }
+
+	// TODO: Impmenet logic to avoid obstacles
 
 	updateControlValuesFromGamepad();
 	// If any steering overrides are happening

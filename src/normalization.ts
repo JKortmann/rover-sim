@@ -35,6 +35,7 @@ sensorDataBuffer.subscribe((values) => {
 // Prefix "n" for normalized
 let nVelocity = 0;
 velocityBuffer.subscribe((values) => {
+	// TODO: Better calc of velocity
 	nVelocity = harmonicMean(values);
 });
 
@@ -75,6 +76,7 @@ export const getNormalziedValues = () => {
 	return {
 		nVelocity,
 		nLocation,
+		lastNPosition,
 		nHeading,
 		timeDelta,
 	};

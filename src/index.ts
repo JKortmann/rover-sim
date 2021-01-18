@@ -1,13 +1,12 @@
 import { updateVisuals } from './visuals';
 import { updateNormalazation, getNormalziedValues } from './normalization';
-import { DrivingData } from './types/Driving';
 import { getDrivingValues } from './driving';
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL2, SensorValues, LocationOfInterest } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL2, LocationOfInterest } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 
-import { getPathForScanningRectangle, clamp, signedAngleDifference } from './util/functions';
+import { getPathForScanningRectangle, signedAngleDifference } from './util/functions';
 
-import { Rectangle } from './types';
+import { Rectangle, VisualData } from './types';
 
 const debugPosition = new LatLon(52.477050353132384, 13.395281227289209);
 const debugRectangle: Rectangle = [
@@ -80,7 +79,7 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 		desiredHeadingDelta,
 		distanceToDestination,
 		proximity,
-	});
+	} as VisualData);
 	return getDrivingValues(drivingData, engines, steering);
 };
 simulation = new Simulation({

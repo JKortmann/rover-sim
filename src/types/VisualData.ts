@@ -1,4 +1,4 @@
-import { LatLon } from 'geodesy/latlon-spherical';
+import LatLon from 'geodesy/latlon-spherical';
 
 export interface VisualData {
 	velocity: number;

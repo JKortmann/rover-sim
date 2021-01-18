@@ -175,6 +175,8 @@ export const updateVisuals = (data: VisualData) => {
 		distanceToDestination,
 		proximity,
 	} = data;
+
+	// TODO: Implemt new logic with own buffer
 	// if (positionChart?.chartjs?.data?.datasets?.[0].data) {
 	// 	positionChart.chartjs.data.datasets[1].data = positionBuffer.values.map((value) => ({
 	// 		x: value.longitude,
