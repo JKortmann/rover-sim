@@ -12,4 +12,5 @@ export interface VisualData {
 	desiredHeadingDelta: number;
 	distanceToDestination: number;
 	proximity: number[];
+	lastNLocation: LatLon;
 }

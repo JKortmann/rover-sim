@@ -12,7 +12,7 @@ export class MCU {
 	// Buffer
 	sensorDataBuffer = new Buffer<SensorValues>(5);
 	velocityBuffer = new Buffer<number>(5);
-	positionBuffer = new Buffer<LatLon>(10);
+	locationBuffer = new Buffer<LatLon>(10);
 	headingBuffer = new Buffer<number>(25);
 	// Computed Values
 	distanceToDestination = 0;
@@ -23,6 +23,8 @@ export class MCU {
 	nVelocity = 0;
 	nLocation = new LatLon(0, 0);
 	nHeading = 0;
+	// Last Values
+	lastNLocation = new LatLon(0, 0);
 
 	constructor() {}
 
@@ -41,7 +43,14 @@ export class MCU {
 		} = sensorData;
 
 		this.position = new LatLon(latitude, longitude);
-		this.positionBuffer.push(this.position);
+
+		if (this.locationBuffer.values.length) {
+			this.lastNLocation = geographicMidpointWithoutWeights(this.locationBuffer.values);
+		} else {
+			this.lastNLocation = this.position;
+		}
+
+		this.locationBuffer.push(this.position);
 		this.headingBuffer.push(heading);
 
 		const previous = this.sensorDataBuffer?.previous() || sensorData;
@@ -61,7 +70,7 @@ export class MCU {
 		this.velocityBuffer.push(velocity);
 
 		this.nVelocity = harmonicMean(this.velocityBuffer.values);
-		this.nLocation = geographicMidpointWithoutWeights(this.positionBuffer.values);
+		this.nLocation = geographicMidpointWithoutWeights(this.locationBuffer.values);
 		this.nHeading = harmonicMean(this.headingBuffer.values);
 
 		updateVisuals({
@@ -76,6 +85,7 @@ export class MCU {
 			desiredHeadingDelta: this.desiredHeadingDelta,
 			distanceToDestination: this.distanceToDestination,
 			proximity,
+			lastNLocation: this.lastNLocation,
 		});
 	}
 }

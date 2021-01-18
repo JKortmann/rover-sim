@@ -1,7 +1,12 @@
+import LatLon from 'geodesy/latlon-spherical';
+import { Buffer } from './util/visuals/Buffer';
 import { Display } from './util/visuals/Display';
 import { Graph } from './util/visuals/Graph';
 import { Chart } from './util/visuals/Chart';
 import { VisualData } from './types';
+
+const locationBuffer = new Buffer<LatLon>(40);
+const tempDistanceBuffer = new Buffer<number>(40);
 
 const display = new Display({ width: 900, height: 200 });
 const velocityGraph = new Graph(
@@ -174,26 +179,28 @@ export const updateVisuals = (data: VisualData) => {
 		desiredHeadingDelta,
 		distanceToDestination,
 		proximity,
+		lastNLocation,
 	} = data;
 
-	// TODO: Implemt new logic with own buffer
-	// if (positionChart?.chartjs?.data?.datasets?.[0].data) {
-	// 	positionChart.chartjs.data.datasets[1].data = positionBuffer.values.map((value) => ({
-	// 		x: value.longitude,
-	// 		y: value.latitude,
-	// 	}));
-	// 	positionChart.chartjs.data.datasets[0].data = [{ x: nPosition.longitude, y: nPosition.latitude }];
-	// 	positionChart.chartjs.update();
-	// }
+	locationBuffer.push(location);
 
-	// if (nPositionDeltaChart?.chartjs?.data?.datasets?.[0].data) {
-	// 	const distance = lastNPosition.distanceTo(nLocation);
-	// 	tempDistanceBuffer.push(distance);
-	// 	const maxDistance = Math.max(...tempDistanceBuffer.values);
-	// 	nPositionDeltaChart.chartjs.data.datasets[0].data = [lastNPosition.distanceTo(nLocation)];
-	// 	nPositionDeltaChart.chartjs.data.datasets[1].data = [maxDistance];
-	// 	nPositionDeltaChart.chartjs.update();
-	// }
+	if (positionChart?.chartjs?.data?.datasets?.[0].data) {
+		positionChart.chartjs.data.datasets[1].data = locationBuffer.values.map((value) => ({
+			x: value.longitude,
+			y: value.latitude,
+		}));
+		positionChart.chartjs.data.datasets[0].data = [{ x: nLocation.longitude, y: nLocation.latitude }];
+		positionChart.chartjs.update();
+	}
+
+	if (nPositionDeltaChart?.chartjs?.data?.datasets?.[0].data) {
+		const distance = lastNLocation.distanceTo(nLocation);
+		tempDistanceBuffer.push(distance);
+		const maxDistance = Math.max(...tempDistanceBuffer.values);
+		nPositionDeltaChart.chartjs.data.datasets[0].data = [lastNLocation.distanceTo(nLocation)];
+		nPositionDeltaChart.chartjs.data.datasets[1].data = [maxDistance];
+		nPositionDeltaChart.chartjs.update();
+	}
 
 	velocityGraph.next({
 		velocity,
