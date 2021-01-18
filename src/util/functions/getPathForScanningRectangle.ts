@@ -2,11 +2,7 @@ import { Rectangle } from '../../types';
 import LatLong from 'geodesy/latlon-spherical';
 import { getPointsDistancesAscending } from './index';
 
-export const getPathForScanningRectangle = (
-	rectangle: Rectangle,
-	currentLocation: LatLong,
-	detectionWidth: number = 1
-) => {
+export const getPathForScanningRectangle = (rectangle: Rectangle, currentLocation: LatLong, detectionWidth = 1) => {
 	const rectanglePointDistances = getPointsDistancesAscending(rectangle, currentLocation);
 	const closestRectanglePoint = rectanglePointDistances[0];
 	const distancesRemainingRectanglePoints = getPointsDistancesAscending(rectangle, closestRectanglePoint).slice(1);

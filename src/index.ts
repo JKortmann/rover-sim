@@ -6,8 +6,6 @@ import LatLon from 'geodesy/latlon-spherical';
 
 import { Rectangle } from './types';
 
-let simulation: Simulation | null;
-
 const hasSterering = false; // Determins if rover has steering axios
 const origin = new LatLon(52.477050353132384, 13.395281227289209);
 const detectionWidth = 1; // in m
@@ -27,11 +25,6 @@ navigator.addSearchArea(searchArea);
 
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	mcu.updateValues(sensorData);
-	const {
-		location: { latitude, longitude },
-		heading,
-		proximity,
-	} = sensorData;
 
 	return rover.getDrivingValues(engines, steering);
 };
@@ -45,7 +38,7 @@ const rectangle: LocationOfInterest[] = [
 	})),
 ];
 
-simulation = new Simulation({
+const simulation = new Simulation({
 	loop,
 	origin: {
 		latitude: 52.477050353132384,

@@ -26,8 +26,6 @@ export class MCU {
 	// Last Values
 	lastNLocation = new LatLon(0, 0);
 
-	constructor() {}
-
 	updateDestination(destination: LatLon) {
 		this.destination = destination;
 	}
