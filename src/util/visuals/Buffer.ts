@@ -26,6 +26,10 @@ export class Buffer<T> {
 		this.subscribers.forEach((sub) => sub(this.values));
 	}
 
+	previous() {
+		return this.values[1];
+	}
+
 	latest() {
 		return this.values[0];
 	}

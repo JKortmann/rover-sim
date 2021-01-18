@@ -1,87 +1,50 @@
-import { updateVisuals } from './visuals';
-import { updateNormalazation, getNormalziedValues } from './normalization';
-import { getDrivingValues } from './driving';
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL2, LocationOfInterest } from 'rover';
+import { Rover } from './Rover';
+import { MCU } from './MCU';
+import { Navigator } from './Navigator';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, LocationOfInterest } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
-
-import { getPathForScanningRectangle, signedAngleDifference } from './util/functions';
 
 import { Rectangle, VisualData } from './types';
 
-const debugPosition = new LatLon(52.477050353132384, 13.395281227289209);
-const debugRectangle: Rectangle = [
+let simulation: Simulation | null;
+
+const hasSterering = false; // Determins if rover has steering axios
+const origin = new LatLon(52.477050353132384, 13.395281227289209);
+const detectionWidth = 1; // in m
+const destinations: LatLon[] = [];
+const searchArea: Rectangle = [
 	new LatLon(52.47707415932714, 13.39510403573513),
 	new LatLon(52.47707415932714, 13.395281061530113),
 	new LatLon(52.47723419690555, 13.395281061530113),
 	new LatLon(52.47723419690555, 13.39510403573513),
 ];
 
-const rectangle: LocationOfInterest[] = [
-	...debugRectangle.map((point, index) => ({
-		latitude: point.latitude,
-		longitude: point.longitude,
-		label: `R${index}`,
-	})),
-];
+const navigator = new Navigator(origin, destinations, detectionWidth);
+const mcu = new MCU();
+const rover = new Rover(navigator, mcu, hasSterering);
 
-const debugDetectionWidth = 1; // in m
-
-const rectanglePath = getPathForScanningRectangle(debugRectangle, debugPosition, debugDetectionWidth);
-
-const destinations: LocationOfInterest[] = [
-	...rectanglePath.map((point, index) => ({
-		latitude: point.latitude,
-		longitude: point.longitude,
-		label: index.toString(),
-	})),
-];
-
-let simulation: Simulation | null;
-
-let currentDestinationIndex = 0;
+navigator.addSearchArea(searchArea);
 
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
-	updateNormalazation(sensorData);
+	mcu.updateValues(sensorData);
 	const {
 		location: { latitude, longitude },
 		heading,
 		proximity,
 	} = sensorData;
 
-	const { nVelocity, nLocation, nHeading, timeDelta } = getNormalziedValues();
-
-	const drivingData = {};
-
-	const currentDestination = destinations[currentDestinationIndex];
-	const destinationPosition = new LatLon(currentDestination.latitude, currentDestination.longitude);
-	const position = new LatLon(latitude, longitude);
-	const distanceToDestination = position.distanceTo(destinationPosition);
-
-	const desiredHeading = position.initialBearingTo(destinationPosition);
-	const desiredHeadingDelta = signedAngleDifference(nHeading, desiredHeading);
-
-	if (Math.round(nVelocity) === 0 && Math.floor(distanceToDestination) === 0) {
-		if (currentDestinationIndex < destinations.length - 1) {
-			currentDestinationIndex++;
-		} else {
-			// We're done!
-		}
-	}
-
-	updateVisuals({
-		timeDelta,
-		nLocation,
-		nVelocity,
-		location: position,
-		heading,
-		nHeading,
-		desiredHeading,
-		desiredHeadingDelta,
-		distanceToDestination,
-		proximity,
-	} as VisualData);
-	return getDrivingValues(drivingData, engines, steering);
+	return rover.getDrivingValues(engines, steering);
 };
+
+// Only for visual purpose to show the bordes of the search Area
+const rectangle: LocationOfInterest[] = [
+	...searchArea.map((point, index) => ({
+		latitude: point.latitude,
+		longitude: point.longitude,
+		label: `R${index}`,
+	})),
+];
+
 simulation = new Simulation({
 	loop,
 	origin: {
@@ -89,7 +52,7 @@ simulation = new Simulation({
 		longitude: 13.395281227289209,
 	},
 	element: document.querySelector('main') as HTMLElement,
-	locationsOfInterest: [...rectangle, ...destinations],
+	locationsOfInterest: [...rectangle],
 	renderingOptions: {
 		width: 900,
 		height: 900,
@@ -98,7 +61,7 @@ simulation = new Simulation({
 		{ latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5 },
 		{ latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5 },
 	],
-	physicalConstraints: AUTHENTICITY_LEVEL2,
+	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
 
 simulation.start();
