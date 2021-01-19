@@ -33,11 +33,5 @@
 		"chart.js": "^2.9.4",
 		"geodesy": "^2.2.1",
 		"rover": "github:lscheibel/rover#develop"
-	},
-	"husky": {
-		"hooks": {
-			"pre-commit": "npm test",
-			"pre-push": "npm test"
-		}
 	}
 }
