@@ -12,7 +12,7 @@ export class MCU {
 	// Buffer
 	sensorDataBuffer = new Buffer<SensorValues>(5);
 	velocityBuffer = new Buffer<number>(5);
-	locationBuffer = new Buffer<LatLon>(10);
+	positionBuffer = new Buffer<LatLon>(10);
 	headingBuffer = new Buffer<number>(25);
 	// Computed Values
 	distanceToDestination = 0;
@@ -21,10 +21,10 @@ export class MCU {
 	timeDelta = 0;
 	// Nomalized Vales
 	nVelocity = 0;
-	nLocation = new LatLon(0, 0);
+	nPosition = new LatLon(0, 0);
 	nHeading = 0;
 	// Last Values
-	lastNLocation = new LatLon(0, 0);
+	lastNPosition = new LatLon(0, 0);
 
 	updateDestination(destination: LatLon) {
 		this.destination = destination;
@@ -42,13 +42,13 @@ export class MCU {
 
 		this.position = new LatLon(latitude, longitude);
 
-		if (this.locationBuffer.values.length) {
-			this.lastNLocation = geographicMidpointWithoutWeights(this.locationBuffer.values);
+		if (this.positionBuffer.values.length) {
+			this.lastNPosition = geographicMidpointWithoutWeights(this.positionBuffer.values);
 		} else {
-			this.lastNLocation = this.position;
+			this.lastNPosition = this.position;
 		}
 
-		this.locationBuffer.push(this.position);
+		this.positionBuffer.push(this.position);
 		this.headingBuffer.push(heading);
 
 		const previous = this.sensorDataBuffer?.previous() || sensorData;
@@ -68,22 +68,22 @@ export class MCU {
 		this.velocityBuffer.push(velocity);
 
 		this.nVelocity = harmonicMean(this.velocityBuffer.values);
-		this.nLocation = geographicMidpointWithoutWeights(this.locationBuffer.values);
+		this.nPosition = geographicMidpointWithoutWeights(this.positionBuffer.values);
 		this.nHeading = harmonicMean(this.headingBuffer.values);
 
 		updateVisuals({
 			velocity,
 			nVelocity: this.nVelocity,
 			timeDelta: this.timeDelta,
-			location: this.position,
-			nLocation: this.nLocation,
+			position: this.position,
+			nPosition: this.nPosition,
 			heading,
 			nHeading: this.nHeading,
 			desiredHeading: this.desiredHeading,
 			desiredHeadingDelta: this.desiredHeadingDelta,
 			distanceToDestination: this.distanceToDestination,
 			proximity,
-			lastNLocation: this.lastNLocation,
+			lastNPosition: this.lastNPosition,
 		});
 	}
 }

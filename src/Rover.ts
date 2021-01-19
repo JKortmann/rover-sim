@@ -21,6 +21,11 @@ export class Rover {
 		this.hasSteering = hasSterering;
 	}
 
+	reachedTarget() {
+		this.navigator.reachedCurrentDestination();
+		this.mcu.updateDestination(this.navigator.currentDestination);
+	}
+
 	getDrivingValues(engines: Engines, steering: Steering) {
 		engines = [0, 0] as Engines;
 		steering = [180, 180] as Steering;

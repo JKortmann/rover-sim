@@ -5,7 +5,7 @@ import { Graph } from './util/visuals/Graph';
 import { Chart } from './util/visuals/Chart';
 import { VisualData } from './types';
 
-const locationBuffer = new Buffer<LatLon>(40);
+const positionBuffer = new Buffer<LatLon>(40);
 const tempDistanceBuffer = new Buffer<number>(40);
 
 const display = new Display({ width: 900, height: 200 });
@@ -171,33 +171,33 @@ export const updateVisuals = (data: VisualData) => {
 		velocity,
 		nVelocity,
 		timeDelta,
-		location,
-		nLocation,
+		position,
+		nPosition,
 		heading,
 		nHeading,
 		desiredHeading,
 		desiredHeadingDelta,
 		distanceToDestination,
 		proximity,
-		lastNLocation,
+		lastNPosition,
 	} = data;
 
-	locationBuffer.push(location);
+	positionBuffer.push(position);
 
 	if (positionChart?.chartjs?.data?.datasets?.[0].data) {
-		positionChart.chartjs.data.datasets[1].data = locationBuffer.values.map((value) => ({
+		positionChart.chartjs.data.datasets[1].data = positionBuffer.values.map((value) => ({
 			x: value.longitude,
 			y: value.latitude,
 		}));
-		positionChart.chartjs.data.datasets[0].data = [{ x: nLocation.longitude, y: nLocation.latitude }];
+		positionChart.chartjs.data.datasets[0].data = [{ x: nPosition.longitude, y: nPosition.latitude }];
 		positionChart.chartjs.update();
 	}
 
 	if (nPositionDeltaChart?.chartjs?.data?.datasets?.[0].data) {
-		const distance = lastNLocation.distanceTo(nLocation);
+		const distance = lastNPosition.distanceTo(nPosition);
 		tempDistanceBuffer.push(distance);
 		const maxDistance = Math.max(...tempDistanceBuffer.values);
-		nPositionDeltaChart.chartjs.data.datasets[0].data = [lastNLocation.distanceTo(nLocation)];
+		nPositionDeltaChart.chartjs.data.datasets[0].data = [lastNPosition.distanceTo(nPosition)];
 		nPositionDeltaChart.chartjs.data.datasets[1].data = [maxDistance];
 		nPositionDeltaChart.chartjs.update();
 	}
@@ -209,8 +209,8 @@ export const updateVisuals = (data: VisualData) => {
 	});
 
 	latitudeGraph.next({
-		latidude: location.latitude,
-		nLatitude: nLocation.latitude,
+		latidude: position.latitude,
+		nLatitude: position.latitude,
 	});
 
 	HeadingGraph.next({
@@ -220,8 +220,8 @@ export const updateVisuals = (data: VisualData) => {
 
 	display.next({
 		proximity: proximity[0] + 'm',
-		position: location.latitude + ', ' + location.longitude,
-		nPosition: nLocation.latitude + ', ' + nLocation.longitude,
+		position: position.latitude + ', ' + position.longitude,
+		nPosition: nPosition.latitude + ', ' + nPosition.longitude,
 		desiredHeadingDelta: desiredHeadingDelta + ' deg',
 		desiredHeading: desiredHeading + ' deg',
 		Heading: heading + ' deg',
