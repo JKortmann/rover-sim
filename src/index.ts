@@ -6,7 +6,7 @@ import LatLon from 'geodesy/latlon-spherical';
 
 import { Rectangle } from './types';
 
-const hasSterering = false; // Determins if rover has steering axios
+const hasSteering = false; // Determins if rover has steering axios
 const origin = new LatLon(52.477050353132384, 13.395281227289209);
 const detectionWidth = 1; // in m
 const destinations: LatLon[] = [];
@@ -19,7 +19,7 @@ const searchArea: Rectangle = [
 
 const navigator = new Navigator(origin, destinations, detectionWidth);
 const mcu = new MCU();
-const rover = new Rover(navigator, mcu, hasSterering);
+const rover = new Rover(navigator, mcu, hasSteering);
 
 navigator.addSearchArea(searchArea);
 
