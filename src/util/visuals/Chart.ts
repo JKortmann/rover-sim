@@ -4,9 +4,9 @@ import ChartJS, { ChartConfiguration } from 'chart.js';
 const CANVAS_CONTAINER = document.getElementById('canvasContainer') as HTMLDivElement;
 
 export class Chart {
-	private readonly canvas: HTMLCanvasElement
+	private readonly canvas: HTMLCanvasElement;
 	private context: CanvasRenderingContext2D;
-	public chartjs: ChartJS
+	public chartjs: ChartJS;
 
 	constructor(canvasOptions: CanvasOptions, chartOptions: ChartConfiguration) {
 		console.log(canvasOptions);
@@ -21,6 +21,6 @@ export class Chart {
 
 		CANVAS_CONTAINER.appendChild(this.canvas);
 
-		this.chartjs = new ChartJS(this.context, chartOptions)
+		this.chartjs = new ChartJS(this.context, chartOptions);
 	}
 }
