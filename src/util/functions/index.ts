@@ -9,6 +9,8 @@ import { geometricMean } from './geometricMean';
 import { clamp } from './clamp';
 import { getPathForScanningRectangle } from './getPathForScanningRectangle';
 import { getPointsDistancesAscending } from './getPointsDistancesAscending';
+import { geographicMidpointWithWeights } from './geographicMidpointWithWeights';
+import { geographicMidpointWithoutWeights } from './geographicMidpointWithoutWeights';
 
 export {
 	getEngineForceToTravelDistance,
@@ -22,4 +24,6 @@ export {
 	clamp,
 	getPathForScanningRectangle,
 	getPointsDistancesAscending,
+	geographicMidpointWithWeights,
+	geographicMidpointWithoutWeights,
 };

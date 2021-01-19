@@ -1,8 +1,8 @@
-import { Rectangle } from '../types';
+import { Rectangle } from '../../types';
 import LatLong from 'geodesy/latlon-spherical';
 import { getPointsDistancesAscending } from './index';
 
-export const getPathForScanningRectangle = (rectangle: Rectangle, currentLocation: LatLong, detectionWidth: number) => {
+export const getPathForScanningRectangle = (rectangle: Rectangle, currentLocation: LatLong, detectionWidth = 1) => {
 	const rectanglePointDistances = getPointsDistancesAscending(rectangle, currentLocation);
 	const closestRectanglePoint = rectanglePointDistances[0];
 	const distancesRemainingRectanglePoints = getPointsDistancesAscending(rectangle, closestRectanglePoint).slice(1);
@@ -15,15 +15,19 @@ export const getPathForScanningRectangle = (rectangle: Rectangle, currentLocatio
 
 	const points: LatLong[] = [];
 
+	let direction = 0;
+
 	for (let i = 1; i <= shortSideSections; i += 2) {
-		const a = pointForLongSide.intermediatePointTo(furthestPoint, i / shortSideSections)
-		const b = closestRectanglePoint.intermediatePointTo(pointForShortSide, i / shortSideSections)
-		if (i % 3 === 0) {
-			points.push(a);
+		const a = pointForLongSide.intermediatePointTo(furthestPoint, i / shortSideSections);
+		const b = closestRectanglePoint.intermediatePointTo(pointForShortSide, i / shortSideSections);
+		if (!direction) {
 			points.push(b);
+			points.push(a);
+			direction = 1;
 		} else {
-			points.push(b);
 			points.push(a);
+			points.push(b);
+			direction = 0;
 		}
 	}
 
