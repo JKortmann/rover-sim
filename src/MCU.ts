@@ -1,6 +1,6 @@
 import { Buffer } from './util/visuals/Buffer';
 import { signedAngleDifference, harmonicMean, geographicMidpointWithoutWeights } from './util/functions';
-import { updateVisuals } from './Visuals';
+import { updateVisuals } from './visuals';
 
 // Types
 import { SensorValues } from 'rover';
