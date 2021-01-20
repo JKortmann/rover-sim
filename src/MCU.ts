@@ -1,3 +1,4 @@
+import { Navigator } from './Navigator';
 import { Buffer } from './util/visuals/Buffer';
 import { signedAngleDifference, harmonicMean, geographicMidpointWithoutWeights } from './util/functions';
 import { updateVisuals } from './visuals';
@@ -7,8 +8,9 @@ import { SensorValues } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 
 export class MCU {
-	destination = new LatLon(0, 0);
-	position = new LatLon(0, 0);
+	destination: LatLon;
+	position: LatLon;
+	navigator: Navigator;
 	// Buffer
 	sensorDataBuffer = new Buffer<SensorValues>(5);
 	velocityBuffer = new Buffer<number>(5);
@@ -26,13 +28,15 @@ export class MCU {
 	// Last Values
 	lastNPosition = new LatLon(0, 0);
 
-	updateDestination(destination: LatLon) {
-		this.destination = destination;
+	constructor(position: LatLon, navigator: Navigator) {
+		this.destination = navigator.currentDestination || position;
+		this.navigator = navigator;
+		this.position = position;
 	}
 
 	updateValues(sensorData: SensorValues) {
 		this.sensorDataBuffer.push(sensorData);
-
+		this.destination = this.navigator.currentDestination;
 		const {
 			location: { latitude, longitude },
 			heading,
@@ -63,6 +67,11 @@ export class MCU {
 		this.desiredHeading = this.position.initialBearingTo(this.destination);
 		this.desiredHeadingDelta = signedAngleDifference(this.nHeading, this.desiredHeading);
 
+		if (isNaN(this.desiredHeading)) {
+			this.desiredHeading = 0;
+			this.desiredHeadingDelta = 0;
+		}
+
 		const velocity = positionDelta / (this.timeDelta / 1000);
 
 		this.velocityBuffer.push(velocity);
@@ -72,6 +81,7 @@ export class MCU {
 		this.nHeading = harmonicMean(this.headingBuffer.values);
 
 		updateVisuals({
+			destination: this.destination,
 			velocity,
 			nVelocity: this.nVelocity,
 			timeDelta: this.timeDelta,

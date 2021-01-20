@@ -1,4 +1,4 @@
-import { clamp } from './util/functions';
+import { clamp, getEngineForceToTravelDistance, turnVehicle } from './util/functions';
 
 import { Navigator } from './Navigator';
 import { MCU } from './MCU';
@@ -21,29 +21,23 @@ export class Rover {
 		this.hasSteering = hasSterering;
 	}
 
-	reachedTarget() {
-		this.navigator.reachedCurrentDestination();
-		this.mcu.updateDestination(this.navigator.currentDestination);
-	}
-
 	getDrivingValues(engines: Engines, steering: Steering) {
 		engines = [0, 0] as Engines;
 		steering = [180, 180] as Steering;
 
 		// TODO: Implement logic to turn vehicle
 
-		// if (Math.round(distanceToDestination) > 0) {
-		// 	engines = engines.map(() => getEngineForceToTravelDistance(distanceToDestination, nVelocity)) as [
-		// 		number,
-		// 		number
-		// 	];
-		// }
+		if (Math.round(this.mcu.distanceToDestination) > 0) {
+			engines = engines.map(() =>
+				getEngineForceToTravelDistance(this.mcu.distanceToDestination, this.mcu.nVelocity)
+			) as [number, number];
+		}
 
 		// TODO: Implement logic to drive vehicle
 
-		// if (Math.round(desiredHeadingDelta) !== 0) {
-		// 	engines = turnVehicle(desiredHeadingDelta) as [number, number];
-		// }
+		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
+			engines = turnVehicle(this.mcu.desiredHeadingDelta) as [number, number];
+		}
 
 		// TODO: Impmenet logic to avoid obstacles
 

@@ -18,7 +18,7 @@ const searchArea: Rectangle = [
 ];
 
 const navigator = new Navigator(origin, destinations, detectionWidth);
-const mcu = new MCU();
+const mcu = new MCU(origin, navigator);
 const rover = new Rover(navigator, mcu, hasSteering);
 
 navigator.addSearchArea(searchArea);

@@ -168,6 +168,7 @@ const nPositionDeltaChart = new Chart(
 
 export const updateVisuals = (data: VisualData) => {
 	const {
+		destination,
 		velocity,
 		nVelocity,
 		timeDelta,
@@ -219,6 +220,7 @@ export const updateVisuals = (data: VisualData) => {
 	});
 
 	display.next({
+		destination: destination,
 		proximity: proximity[0] + 'm',
 		position: position.latitude + ', ' + position.longitude,
 		nPosition: nPosition.latitude + ', ' + nPosition.longitude,
