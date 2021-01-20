@@ -1,7 +1,7 @@
 import { Rover } from './Rover';
 import { MCU } from './MCU';
 import { Navigator } from './Navigator';
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL2, LocationOfInterest } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, LocationOfInterest } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 
 import { Rectangle } from './types';
@@ -54,7 +54,7 @@ const simulation = new Simulation({
 		{ latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5 },
 		{ latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5 },
 	],
-	physicalConstraints: AUTHENTICITY_LEVEL2,
+	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
 
 simulation.start();
