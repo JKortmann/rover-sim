@@ -1,4 +1,5 @@
 import { Rover } from './Rover';
+import { Tank } from './Tank';
 import { MCU } from './MCU';
 import { Navigator } from './Navigator';
 import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, LocationOfInterest } from 'rover';
@@ -6,7 +7,7 @@ import LatLon from 'geodesy/latlon-spherical';
 
 import { Rectangle } from './types';
 
-const hasSteering = false; // Determins if rover has steering axios
+const hasSteering = true; // Determins if rover has steering axios
 const origin = new LatLon(52.477050353132384, 13.395281227289209);
 const detectionWidth = 1; // in m
 const destinations: LatLon[] = [];
@@ -19,14 +20,20 @@ const searchArea: Rectangle = [
 
 const navigator = new Navigator(origin, destinations, detectionWidth);
 const mcu = new MCU(origin, navigator);
+
 const rover = new Rover(navigator, mcu, hasSteering);
+const tank = new Tank(navigator, mcu, hasSteering);
 
 navigator.addSearchArea(searchArea);
 
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	mcu.updateValues(sensorData);
 
-	return rover.getDrivingValues(engines, steering);
+	if (hasSteering) {
+		return rover.getDrivingValues(engines, steering);
+	} else {
+		return rover.getDrivingValues(engines);
+	}
 };
 
 // Only for visual purpose to show the bordes of the search Area

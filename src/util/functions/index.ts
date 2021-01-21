@@ -10,6 +10,7 @@ import { getPathForScanningRectangle } from './getPathForScanningRectangle';
 import { getPointsDistancesAscending } from './getPointsDistancesAscending';
 import { geographicMidpointWithWeights } from './geographicMidpointWithWeights';
 import { geographicMidpointWithoutWeights } from './geographicMidpointWithoutWeights';
+import { turnVehicleWithSteering } from './turnVehicleWithSteering';
 
 export {
 	getEngineForceToTravelDistance,
@@ -24,4 +25,5 @@ export {
 	getPointsDistancesAscending,
 	geographicMidpointWithWeights,
 	geographicMidpointWithoutWeights,
+	turnVehicleWithSteering,
 };
