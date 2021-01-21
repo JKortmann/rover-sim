@@ -21,8 +21,8 @@ const searchArea: Rectangle = [
 const navigator = new Navigator(origin, destinations, detectionWidth);
 const mcu = new MCU(origin, navigator);
 
-const rover = new Rover(navigator, mcu, hasSteering);
-const tank = new Tank(navigator, mcu, hasSteering);
+const rover = new Rover(navigator, mcu);
+const tank = new Tank(navigator, mcu);
 
 navigator.addSearchArea(searchArea);
 
@@ -32,7 +32,7 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	if (hasSteering) {
 		return rover.getDrivingValues(engines, steering);
 	} else {
-		return rover.getDrivingValues(engines);
+		return { ...tank.getDrivingValues(engines), steering: [180, 180] };
 	}
 };
 
