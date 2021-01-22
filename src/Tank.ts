@@ -34,7 +34,6 @@ export class Tank {
 		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
 			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
 		}
-		console.log(engines);
 
 		// TODO: Impmenet logic to avoid obstacles
 
