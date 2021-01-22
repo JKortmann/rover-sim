@@ -27,7 +27,7 @@ export class Rover {
 	}
 
 	getDrivingValues(engines: Engines, steering: Steering) {
-		engines = [0, 0] as Engines;
+		engines = [0.8, 0.8] as Engines;
 		steering = [180, 180] as Steering;
 
 		// TODO: Implement logic to turn vehicle
@@ -46,6 +46,55 @@ export class Rover {
 		// }
 
 		// TODO: Impmenet logic to avoid obstacles
+		let proximityArray = this.mcu.sensorDataBuffer.item(0).proximity;
+		let closestPointAngle = proximityArray.indexOf(Math.min(...proximityArray));
+		let closestPointProximity = Math.min(...proximityArray);
+
+		if ((closestPointProximity) < 3) {
+			if (closestPointAngle >= 0 && closestPointAngle < 45) {
+				// front right
+				steering[0] = 180 - 10 - closestPointProximity;
+				steering[1] = 180 + 10 + closestPointProximity;
+
+			} else if (closestPointAngle > 135 && closestPointAngle <= 180) {
+				// front left
+				steering[0] = 180 + 10 + closestPointProximity;
+				steering[1] = 180 - 10 - closestPointProximity;
+
+			} else if (closestPointAngle > 45 && closestPointAngle <= 90) {
+				// Back right
+				steering[0] = 180 + 10 + closestPointProximity;
+				steering[1] = 180 - 10 - closestPointProximity;
+
+			} else if (closestPointAngle >= 90 && closestPointAngle < 135) {
+				// Back left
+				steering[0] = 180 - 10 - closestPointProximity;
+				steering[1] = 180 + 10 + closestPointProximity;
+
+			} else if (closestPointAngle == 45 || closestPointAngle == 135) {
+				// middle axis
+				// steering[0] = 180;
+				// steering[1] = 180;
+			}
+			console.log(closestPointAngle, closestPointProximity);
+		}
+
+		if ((closestPointProximity) > 4 && (closestPointProximity) < 4.2) {
+			// Wenn closestPoint rechts
+			if (closestPointAngle <= 90) {
+				// Turn right
+				steering[0] = 180 + 10 + closestPointProximity;
+				steering[1] = 180 - 10 - closestPointProximity;
+
+			} else {
+				// Wenn closestPoint links
+				// Turn left
+				steering[0] = 180 - 10 - closestPointProximity;
+				steering[1] = 180 + 10 + closestPointProximity;
+
+			}
+			console.log(closestPointAngle, closestPointProximity);
+		}
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
