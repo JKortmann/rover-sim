@@ -70,31 +70,9 @@ export class Rover {
 				// Back left
 				steering[0] = 180 - 10 - closestPointProximity;
 				steering[1] = 180 + 10 + closestPointProximity;
-
-			} else if (closestPointAngle == 45 || closestPointAngle == 135) {
-				// middle axis
-				// steering[0] = 180;
-				// steering[1] = 180;
 			}
-			console.log(closestPointAngle, closestPointProximity);
 		}
 
-		if ((closestPointProximity) > 4 && (closestPointProximity) < 4.2) {
-			// Wenn closestPoint rechts
-			if (closestPointAngle <= 90) {
-				// Turn right
-				steering[0] = 180 + 10 + closestPointProximity;
-				steering[1] = 180 - 10 - closestPointProximity;
-
-			} else {
-				// Wenn closestPoint links
-				// Turn left
-				steering[0] = 180 - 10 - closestPointProximity;
-				steering[1] = 180 + 10 + closestPointProximity;
-
-			}
-			console.log(closestPointAngle, closestPointProximity);
-		}
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
