@@ -30,6 +30,6 @@
 		"@types/geodesy": "^2.2.2",
 		"chart.js": "^2.9.4",
 		"geodesy": "^2.2.1",
-		"rover": "github:lscheibel/rover#develop"
+		"rover": "github:lscheibel/rover#7f6c5cd3e71b6386580f99276c4fdcef1ff61143"
 	}
 }
