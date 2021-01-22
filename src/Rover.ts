@@ -1,8 +1,8 @@
 import { clamp, getEngineForceToTravelDistance, turnVehicleWithSteering } from './util/functions';
 
 import { Navigator } from './Navigator';
+import { Engines, Steering } from 'rover';
 import { MCU } from './MCU';
-import { Engines, Steering } from './types';
 
 const controlValues = {
 	forward: 0,
@@ -20,20 +20,20 @@ export class Rover {
 	}
 
 	getDrivingValues(engines: Engines, steering: Steering) {
-		engines = [0, 0] as Engines;
-		steering = [180, 180] as Steering;
+		engines = [0, 0, 0, 0, 0, 0];
+		steering = [180, 180, 180, 180];
 
 		// TODO: Implement logic to turn vehicle
 
 		if (Math.round(this.mcu.distanceToDestination) > 0) {
 			const engineSpeed = getEngineForceToTravelDistance(this.mcu.distanceToDestination, this.mcu.nVelocity);
-			engines = [engineSpeed, engineSpeed];
+			engines = engines.map(() => engineSpeed) as Engines;
 		}
 
 		// TODO: Implement logic to drive vehicle
 
 		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
-			steering = turnVehicleWithSteering(this.mcu.desiredHeadingDelta) as [number, number];
+			steering = turnVehicleWithSteering(this.mcu.desiredHeadingDelta);
 		}
 
 		// TODO: Impmenet logic to avoid obstacles
@@ -43,14 +43,16 @@ export class Rover {
 		if (Object.values(controlValues).some((v) => v !== 0)) {
 			const MAX_STEERING_DEGREE = 10;
 			const steerAngle = (controlValues.left - controlValues.right) * MAX_STEERING_DEGREE;
-			engines = [0, 0] as Engines;
-			steering = [180, 180] as Steering;
+			engines = [0, 0, 0, 0, 0, 0];
+			steering = [180, 180, 180, 180];
 
 			engines = engines.map((e) => e + controlValues.forward) as Engines;
 			engines = engines.map((e) => e - controlValues.backward) as Engines;
 
 			steering[0] = 180 - steerAngle;
-			steering[1] = 180 + steerAngle;
+			steering[1] = 180 - steerAngle;
+			steering[2] = 180 + steerAngle;
+			steering[3] = 180 + steerAngle;
 
 			engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		}

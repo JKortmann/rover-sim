@@ -2,7 +2,7 @@ import { clamp, getEngineForceToTravelDistance, turnVehicle } from './util/funct
 
 import { Navigator } from './Navigator';
 import { MCU } from './MCU';
-import { Engines, Steering } from './types';
+import { Engines } from 'rover';
 
 const controlValues = {
 	forward: 0,
@@ -20,41 +20,45 @@ export class Tank {
 	}
 
 	getDrivingValues(engines: Engines) {
-		engines = [0, 0] as Engines;
+		engines = [0, 0, 0, 0, 0, 0] as Engines;
 
 		// TODO: Implement logic to turn vehicle
 
 		if (Math.round(this.mcu.distanceToDestination) > 0) {
 			const engineSpeed = getEngineForceToTravelDistance(this.mcu.distanceToDestination, this.mcu.nVelocity);
-			engines = [engineSpeed, engineSpeed];
+			engines = engines.map(() => engineSpeed) as Engines;
 		}
 
 		// TODO: Implement logic to drive vehicle
 
 		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
-			engines = turnVehicle(this.mcu.desiredHeadingDelta) as [number, number];
+			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
 		}
+		console.log(engines);
 
 		// TODO: Impmenet logic to avoid obstacles
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
 		if (Object.values(controlValues).some((v) => v !== 0)) {
-			engines = [0, 0] as [number, number];
+			engines = [0, 0, 0, 0, 0, 0];
 
-			engines[0] += controlValues.forward;
-			engines[1] += controlValues.forward;
+			engines = engines.map((e, i) => {
+				if (i % 2 === 0) {
+					e += controlValues.forward;
+					e -= controlValues.backward;
+					e += controlValues.left;
+					e -= controlValues.right;
+				} else {
+					e += controlValues.forward;
+					e -= controlValues.backward;
+					e -= controlValues.left;
+					e += controlValues.right;
+				}
+				return e;
+			}) as Engines;
 
-			engines[0] -= controlValues.backward;
-			engines[1] -= controlValues.backward;
-
-			engines[0] -= controlValues.left;
-			engines[1] += controlValues.left;
-
-			engines[0] += controlValues.right;
-			engines[1] -= controlValues.right;
-
-			engines = engines.map((v) => clamp(v, -1, 1)) as [number, number];
+			engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		}
 
 		return { engines };
