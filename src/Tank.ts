@@ -14,9 +14,18 @@ const controlValues = {
 export class Tank {
 	navigator;
 	mcu;
+	isInit = false;
+	minTurningSpeed = 0;
 	constructor(navigator: Navigator, mcu: MCU) {
 		this.navigator = navigator;
 		this.mcu = mcu;
+	}
+
+	init() {
+		// TODO: Get min speed for turning
+		// TODO: Calc the acceleration ?
+		this.minTurningSpeed = 1;
+		this.isInit = true;
 	}
 
 	getDrivingValues(engines: Engines) {
