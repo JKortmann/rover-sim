@@ -29,7 +29,8 @@ navigator.addSearchArea(searchArea);
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	mcu.updateValues(sensorData);
 
-	if (roverType === (RoverType.rover as string)) {
+	// @ts-ignore
+	if (roverType === RoverType.rover) {
 		return rover.getDrivingValues(engines, steering);
 	} else {
 		return { ...tank.getDrivingValues(engines), steering: [180, 180, 180, 180] };
