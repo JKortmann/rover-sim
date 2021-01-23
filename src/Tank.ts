@@ -36,6 +36,54 @@ export class Tank {
 		}
 
 		// TODO: Impmenet logic to avoid obstacles
+		let proximityArray = this.mcu.sensorDataBuffer.item(0).proximity;
+		let closestPointAngle = proximityArray.indexOf(Math.min(...proximityArray));
+		let closestPointProximity = Math.min(...proximityArray);
+
+		if ((closestPointProximity) < 4) {
+
+			engines = [0.6, 0.6, 0.6, 0.6, 0.6, 0.6];
+
+			engines = engines.map((e, i) => {
+
+				if (closestPointAngle >= 0 && closestPointAngle < 45) {
+					// front right
+					if (i % 2 === 0) {
+						e += e;
+					} else {
+						e -= e;
+					}
+
+				} else if (closestPointAngle > 135 && closestPointAngle <= 180) {
+					// front left
+					if (i % 2 === 0) {
+						e -= e;
+					} else {
+						e += e;
+					}
+
+				} else if (closestPointAngle > 45 && closestPointAngle <= 90) {
+					// Back right
+					if (i % 2 === 0) {
+						e -= e;
+					} else {
+						e += e;
+					}
+
+				} else if (closestPointAngle >= 90 && closestPointAngle < 135) {
+					// Back left
+					if (i % 2 === 0) {
+						e += e;
+					} else {
+						e -= e;
+					}
+				}
+				return e;
+			}) as Engines;
+
+			engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
+
+		}
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
