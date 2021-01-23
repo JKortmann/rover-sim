@@ -37,33 +37,6 @@ export class Rover {
 		}
 
 		// TODO: Impmenet logic to avoid obstacles
-		let proximityArray = this.mcu.sensorDataBuffer.item(0).proximity;
-		let closestPointAngle = proximityArray.indexOf(Math.min(...proximityArray));
-		let closestPointProximity = Math.min(...proximityArray);
-
-		if ((closestPointProximity) < 3) {
-			if (closestPointAngle >= 0 && closestPointAngle < 45) {
-				// front right
-				steering[0] = 180 - 10 - closestPointProximity;
-				steering[1] = 180 + 10 + closestPointProximity;
-
-			} else if (closestPointAngle > 135 && closestPointAngle <= 180) {
-				// front left
-				steering[0] = 180 + 10 + closestPointProximity;
-				steering[1] = 180 - 10 - closestPointProximity;
-
-			} else if (closestPointAngle > 45 && closestPointAngle <= 90) {
-				// Back right
-				steering[0] = 180 + 10 + closestPointProximity;
-				steering[1] = 180 - 10 - closestPointProximity;
-
-			} else if (closestPointAngle >= 90 && closestPointAngle < 135) {
-				// Back left
-				steering[0] = 180 - 10 - closestPointProximity;
-				steering[1] = 180 + 10 + closestPointProximity;
-			}
-		}
-
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
