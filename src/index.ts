@@ -1,12 +1,13 @@
 import { Rover } from './Rover';
+import { Tank } from './Tank';
 import { MCU } from './MCU';
 import { Navigator } from './Navigator';
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL2, LocationOfInterest } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, LocationOfInterest, RoverType } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 
 import { Rectangle } from './types';
 
-const hasSteering = false; // Determins if rover has steering axios
+const roverType = RoverType.tank; // Determins if rover has steering axios
 const origin = new LatLon(52.477050353132384, 13.395281227289209);
 const detectionWidth = 1; // in m
 const destinations: LatLon[] = [];
@@ -18,15 +19,22 @@ const searchArea: Rectangle = [
 ];
 
 const navigator = new Navigator(origin, destinations, detectionWidth);
-const mcu = new MCU();
-const rover = new Rover(navigator, mcu, hasSteering);
+const mcu = new MCU(origin, navigator);
+
+const rover = new Rover(navigator, mcu);
+const tank = new Tank(navigator, mcu);
 
 navigator.addSearchArea(searchArea);
 
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	mcu.updateValues(sensorData);
 
-	return rover.getDrivingValues(engines, steering);
+	// @ts-ignore
+	if (roverType === RoverType.rover) {
+		return rover.getDrivingValues(engines, steering);
+	} else {
+		return { ...tank.getDrivingValues(engines), steering: [180, 180, 180, 180] };
+	}
 };
 
 // Only for visual purpose to show the bordes of the search Area
@@ -40,6 +48,7 @@ const rectangle: LocationOfInterest[] = [
 
 const simulation = new Simulation({
 	loop,
+	roverType,
 	origin: {
 		latitude: 52.477050353132384,
 		longitude: 13.395281227289209,
@@ -54,7 +63,7 @@ const simulation = new Simulation({
 		{ latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5 },
 		{ latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5 },
 	],
-	physicalConstraints: AUTHENTICITY_LEVEL2,
+	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
 
 simulation.start();

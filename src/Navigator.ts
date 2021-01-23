@@ -6,7 +6,7 @@ import { Rectangle } from './types';
 export class Navigator {
 	origin: LatLon;
 	destinations: LatLon[];
-	currentDestinationIndex = 0;
+	currentDestinationIndex = -1;
 	detectionWidth = 1;
 
 	constructor(origin: LatLon, destinations: LatLon[], detectionWidth: number) {
@@ -16,6 +16,7 @@ export class Navigator {
 	}
 
 	get currentDestination() {
+		if (this.destinations.length === 0) this.origin;
 		return this.destinations[this.currentDestinationIndex];
 	}
 
@@ -26,10 +27,12 @@ export class Navigator {
 	addSearchArea(rectangle: Rectangle) {
 		const lastDestination = this.destinations[this.destinations.length - 1] || this.origin;
 		const rectanglePath = getPathForScanningRectangle(rectangle, lastDestination, this.detectionWidth);
-		this.destinations.concat(rectanglePath);
+		this.addDestinations(rectanglePath);
 	}
 
 	addDestinations(destinations: LatLon[]) {
-		this.destinations.concat(destinations);
+		const updateCurrentDestination = this.destinations.length - 1 === this.currentDestinationIndex;
+		this.destinations = [...this.destinations, ...destinations];
+		if (updateCurrentDestination) this.reachedCurrentDestination();
 	}
 }

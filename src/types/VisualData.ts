@@ -1,6 +1,7 @@
 import LatLon from 'geodesy/latlon-spherical';
 
 export interface VisualData {
+	destination: LatLon;
 	velocity: number;
 	nVelocity: number;
 	timeDelta: number;

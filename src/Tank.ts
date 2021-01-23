@@ -1,8 +1,8 @@
-import { clamp, getEngineForceToTravelDistance, turnVehicleWithSteering } from './util/functions';
+import { clamp, getEngineForceToTravelDistance, turnVehicle } from './util/functions';
 
 import { Navigator } from './Navigator';
-import { Engines, Steering } from 'rover';
 import { MCU } from './MCU';
+import { Engines } from 'rover';
 
 const controlValues = {
 	forward: 0,
@@ -11,7 +11,7 @@ const controlValues = {
 	right: 0,
 };
 
-export class Rover {
+export class Tank {
 	navigator;
 	mcu;
 	constructor(navigator: Navigator, mcu: MCU) {
@@ -19,9 +19,8 @@ export class Rover {
 		this.mcu = mcu;
 	}
 
-	getDrivingValues(engines: Engines, steering: Steering) {
-		engines = [0, 0, 0, 0, 0, 0];
-		steering = [180, 180, 180, 180];
+	getDrivingValues(engines: Engines) {
+		engines = [0, 0, 0, 0, 0, 0] as Engines;
 
 		// TODO: Implement logic to turn vehicle
 
@@ -33,7 +32,7 @@ export class Rover {
 		// TODO: Implement logic to drive vehicle
 
 		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
-			steering = turnVehicleWithSteering(this.mcu.desiredHeadingDelta);
+			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
 		}
 
 		// TODO: Impmenet logic to avoid obstacles
@@ -41,23 +40,27 @@ export class Rover {
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
 		if (Object.values(controlValues).some((v) => v !== 0)) {
-			const MAX_STEERING_DEGREE = 10;
-			const steerAngle = (controlValues.left - controlValues.right) * MAX_STEERING_DEGREE;
 			engines = [0, 0, 0, 0, 0, 0];
-			steering = [180, 180, 180, 180];
 
-			engines = engines.map((e) => e + controlValues.forward) as Engines;
-			engines = engines.map((e) => e - controlValues.backward) as Engines;
-
-			steering[0] = 180 - steerAngle;
-			steering[1] = 180 - steerAngle;
-			steering[2] = 180 + steerAngle;
-			steering[3] = 180 + steerAngle;
+			engines = engines.map((e, i) => {
+				if (i % 2 === 0) {
+					e += controlValues.forward;
+					e -= controlValues.backward;
+					e += controlValues.left;
+					e -= controlValues.right;
+				} else {
+					e += controlValues.forward;
+					e -= controlValues.backward;
+					e -= controlValues.left;
+					e += controlValues.right;
+				}
+				return e;
+			}) as Engines;
 
 			engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		}
 
-		return { engines, steering };
+		return { engines };
 	}
 }
 
