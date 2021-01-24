@@ -31,20 +31,28 @@ export class Tank {
 	getDrivingValues(engines: Engines) {
 		engines = [0, 0, 0, 0, 0, 0] as Engines;
 
-		// TODO: Implement logic to turn vehicle
+		if (!this.isInit) {
+			this.init();
+		} else {
+			// TODO: Implement logic to turn vehicle
 
-		if (Math.round(this.mcu.distanceToDestination) > 0) {
-			const engineSpeed = getEngineForceToTravelDistance(this.mcu.distanceToDestination, this.mcu.nVelocity);
-			engines = engines.map(() => engineSpeed) as Engines;
+			if (Math.round(this.mcu.distanceToDestination) > 0) {
+				const engineSpeed = getEngineForceToTravelDistance(this.mcu.distanceToDestination, this.mcu.nVelocity);
+				engines = engines.map(() => engineSpeed) as Engines;
+			}
+
+			// TODO: Implement logic to drive vehicle
+
+			if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
+				if (Math.round(this.mcu.nVelocity) === 0) {
+					engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
+				} else {
+					engines = [0, 0, 0, 0, 0, 0];
+				}
+			}
+
+			// TODO: Impmenet logic to avoid obstacles
 		}
-
-		// TODO: Implement logic to drive vehicle
-
-		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
-			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
-		}
-
-		// TODO: Impmenet logic to avoid obstacles
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
