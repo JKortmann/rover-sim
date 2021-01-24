@@ -1,4 +1,4 @@
-import { clamp, getEngineForceToTravelDistance, turnVehicle } from './util/functions';
+import { clamp, getEngineForceToTravelDistance, turnVehicle, avoidObstacles } from './util/functions';
 
 import { Navigator } from './Navigator';
 import { MCU } from './MCU';
@@ -35,58 +35,7 @@ export class Tank {
 			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
 		}
 
-		// TODO: Impmenet logic to avoid obstacles
-		let proximityArray = this.mcu.sensorDataBuffer.item(0).proximity;
-		let closestPointAngle = 360 / proximityArray.length * proximityArray.indexOf(Math.min(...proximityArray));
-		let closestPointProximity = Math.min(...proximityArray);
-
-		if ((closestPointProximity) < 4) {
-
-			engines = [0.6, 0.6, 0.6, 0.6, 0.6, 0.6];
-
-			engines = engines.map((e, i) => {
-
-				if (Math.abs(closestPointAngle - this.mcu.desiredHeading) >= 180) {
-					engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
-
-				} else if (closestPointAngle >= 0 && closestPointAngle < 90) {
-					// front right
-					if (i % 2 === 0) {
-						e += e;
-					} else {
-						e -= e;
-					}
-
-				} else if (closestPointAngle > 270 && closestPointAngle <= 360) {
-					// front left
-					if (i % 2 === 0) {
-						e -= e;
-					} else {
-						e += e;
-					}
-
-				} else if (closestPointAngle > 90 && closestPointAngle <= 180) {
-					// Back right
-					if (i % 2 === 0) {
-						e -= e;
-					} else {
-						e += e;
-					}
-
-				} else if (closestPointAngle >= 180 && closestPointAngle < 270) {
-					// Back left
-					if (i % 2 === 0) {
-						e += e;
-					} else {
-						e -= e;
-					}
-				}
-				return e;
-			}) as Engines;
-
-			engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
-
-		}
+		engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
@@ -107,10 +56,8 @@ export class Tank {
 				}
 				return e;
 			}) as Engines;
-
-			engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		}
-
+		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		return { engines };
 	}
 }

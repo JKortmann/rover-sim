@@ -25,6 +25,7 @@ export class MCU {
 	nVelocity = 0;
 	nPosition = new LatLon(0, 0);
 	nHeading = 0;
+	proximity: number[] = [];
 	// Last Values
 	lastNPosition = new LatLon(0, 0);
 
@@ -44,6 +45,7 @@ export class MCU {
 			proximity,
 		} = sensorData;
 
+		this.proximity = proximity;
 		this.position = new LatLon(latitude, longitude);
 
 		if (this.positionBuffer.values.length) {
