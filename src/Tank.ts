@@ -37,7 +37,7 @@ export class Tank {
 
 		// TODO: Impmenet logic to avoid obstacles
 		let proximityArray = this.mcu.sensorDataBuffer.item(0).proximity;
-		let closestPointAngle = proximityArray.indexOf(Math.min(...proximityArray));
+		let closestPointAngle = 360 / proximityArray.length * proximityArray.indexOf(Math.min(...proximityArray));
 		let closestPointProximity = Math.min(...proximityArray);
 
 		if ((closestPointProximity) < 4) {
@@ -46,7 +46,10 @@ export class Tank {
 
 			engines = engines.map((e, i) => {
 
-				if (closestPointAngle >= 0 && closestPointAngle < 45) {
+				if (Math.abs(closestPointAngle - this.mcu.desiredHeading) >= 180) {
+					engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
+
+				} else if (closestPointAngle >= 0 && closestPointAngle < 90) {
 					// front right
 					if (i % 2 === 0) {
 						e += e;
@@ -54,7 +57,7 @@ export class Tank {
 						e -= e;
 					}
 
-				} else if (closestPointAngle > 135 && closestPointAngle <= 180) {
+				} else if (closestPointAngle > 270 && closestPointAngle <= 360) {
 					// front left
 					if (i % 2 === 0) {
 						e -= e;
@@ -62,7 +65,7 @@ export class Tank {
 						e += e;
 					}
 
-				} else if (closestPointAngle > 45 && closestPointAngle <= 90) {
+				} else if (closestPointAngle > 90 && closestPointAngle <= 180) {
 					// Back right
 					if (i % 2 === 0) {
 						e -= e;
@@ -70,7 +73,7 @@ export class Tank {
 						e += e;
 					}
 
-				} else if (closestPointAngle >= 90 && closestPointAngle < 135) {
+				} else if (closestPointAngle >= 180 && closestPointAngle < 270) {
 					// Back left
 					if (i % 2 === 0) {
 						e += e;
