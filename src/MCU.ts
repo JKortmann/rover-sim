@@ -28,11 +28,16 @@ export class MCU {
 	proximity: number[] = [];
 	// Last Values
 	lastNPosition = new LatLon(0, 0);
+	loopCallback: any[] = [];
 
 	constructor(position: LatLon, navigator: Navigator) {
 		this.destination = navigator.currentDestination || position;
 		this.navigator = navigator;
 		this.position = position;
+	}
+
+	onLoop(fn: any) {
+		this.loopCallback.push(fn);
 	}
 
 	updateValues(sensorData: SensorValues) {
@@ -86,20 +91,6 @@ export class MCU {
 			this.navigator.reachedCurrentDestination();
 		}
 
-		updateVisuals({
-			destination: this.destination,
-			velocity,
-			nVelocity: this.nVelocity,
-			timeDelta: this.timeDelta,
-			position: this.position,
-			nPosition: this.nPosition,
-			heading,
-			nHeading: this.nHeading,
-			desiredHeading: this.desiredHeading,
-			desiredHeadingDelta: this.desiredHeadingDelta,
-			distanceToDestination: this.distanceToDestination,
-			proximity,
-			lastNPosition: this.lastNPosition,
-		});
+		this.loopCallback.forEach((fn) => fn());
 	}
 }

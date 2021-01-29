@@ -4,6 +4,7 @@ import {
 	turnVehicle,
 	avoidObstacles,
 	updateControlValuesFromGamepad,
+	signedAngleDifference,
 } from './util/functions';
 
 import { Navigator } from './Navigator';
@@ -20,25 +21,56 @@ const controlValues = {
 export class Tank {
 	navigator;
 	mcu;
-	isInit = false;
+	state = 'calibrating';
 	minTurningSpeed = 0;
+	minDrivingSpeed = 0;
+	testEngnieValue = 0;
 	constructor(navigator: Navigator, mcu: MCU) {
 		this.navigator = navigator;
 		this.mcu = mcu;
 	}
 
-	init() {
-		// TODO: Get min speed for turning
-		// TODO: Calc the acceleration ?
+	calibrate(engnies: Engines) {
+		if (this.minTurningSpeed === 0) {
+			// calibrate turning
+			const headingDiff =
+				signedAngleDifference(this.mcu.headingBuffer.previous(), this.mcu.headingBuffer.latest()) || 0;
+			if (Math.abs(headingDiff) < 0.001 && headingDiff !== 0) {
+				this.minTurningSpeed = this.testEngnieValue;
+				this.testEngnieValue = 0;
+			} else if (headingDiff !== 0) {
+				this.testEngnieValue = this.testEngnieValue + clamp(headingDiff * 0.1, -0.1, 0.1);
+			} else {
+				this.testEngnieValue = this.testEngnieValue + 0.1;
+			}
+			console.log(this.testEngnieValue);
+			return engnies.map((e, i) => {
+				if (i % 2) {
+					return this.testEngnieValue;
+				} else {
+					return -this.testEngnieValue;
+				}
+			}) as Engines;
+		}
+
+		if (this.minDrivingSpeed === 0) {
+			// calibrate driving
+		}
 		this.minTurningSpeed = 1;
-		this.isInit = true;
+		this.minDrivingSpeed = 1;
+		// Start to test diffrent engnie values for truning and driving.
+
+		// When done set calibrate to true
+		this.state = 'ready';
+
+		return [0, 0, 0, 0, 0, 0] as Engines;
 	}
 
 	getDrivingValues(engines: Engines) {
 		engines = [0, 0, 0, 0, 0, 0] as Engines;
 
-		if (!this.isInit) {
-			this.init();
+		if (this.state === 'calibrating') {
+			engines = this.calibrate(engines);
 		} else {
 			// TODO: Implement logic to turn vehicle
 
@@ -60,25 +92,26 @@ export class Tank {
 			engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
 
 			updateControlValuesFromGamepad(controlValues);
-		}
-		// If any steering overrides are happening
-		if (Object.values(controlValues).some((v) => v !== 0)) {
-			engines = [0, 0, 0, 0, 0, 0];
 
-			engines = engines.map((e, i) => {
-				if (i % 2 === 0) {
-					e += controlValues.forward;
-					e -= controlValues.backward;
-					e += controlValues.left;
-					e -= controlValues.right;
-				} else {
-					e += controlValues.forward;
-					e -= controlValues.backward;
-					e -= controlValues.left;
-					e += controlValues.right;
-				}
-				return e;
-			}) as Engines;
+			// If any steering overrides are happening
+			if (Object.values(controlValues).some((v) => v !== 0)) {
+				engines = [0, 0, 0, 0, 0, 0];
+
+				engines = engines.map((e, i) => {
+					if (i % 2 === 0) {
+						e += controlValues.forward;
+						e -= controlValues.backward;
+						e += controlValues.left;
+						e -= controlValues.right;
+					} else {
+						e += controlValues.forward;
+						e -= controlValues.backward;
+						e -= controlValues.left;
+						e += controlValues.right;
+					}
+					return e;
+				}) as Engines;
+			}
 		}
 		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		return { engines };

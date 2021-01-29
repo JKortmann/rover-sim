@@ -166,7 +166,7 @@ const nPositionDeltaChart = new Chart(
 	}
 );
 
-export const updateVisuals = (data: VisualData) => {
+export const updateVisuals = (data: Record<any, any>) => {
 	const {
 		destination,
 		velocity,
