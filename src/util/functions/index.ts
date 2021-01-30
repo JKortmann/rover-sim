@@ -12,7 +12,6 @@ import { geographicMidpointWithWeights } from './geographicMidpointWithWeights';
 import { geographicMidpointWithoutWeights } from './geographicMidpointWithoutWeights';
 import { turnVehicleWithSteering } from './turnVehicleWithSteering';
 import { avoidObstacles } from './avoidObstacles';
-import { updateControlValuesFromGamepad } from './updateControlValuesFromGamepad';
 
 export {
 	avoidObstacles,
@@ -29,5 +28,4 @@ export {
 	geographicMidpointWithWeights,
 	geographicMidpointWithoutWeights,
 	turnVehicleWithSteering,
-	updateControlValuesFromGamepad,
 };

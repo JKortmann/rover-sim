@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
 	clamp,
 	getEngineForceToTravelDistance,
@@ -6,6 +7,9 @@ import {
 	updateControlValuesFromGamepad,
 	signedAngleDifference,
 } from './util/functions';
+=======
+import { clamp, getEngineForceToTravelDistance, turnVehicle, avoidObstacles } from './util/functions';
+>>>>>>> parent of 09f4be2 (fix: :bug: Fix bugs)
 
 import { Navigator } from './Navigator';
 import { MCU } from './MCU';
@@ -89,8 +93,9 @@ export class Tank {
 				}
 			}
 
-			engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
+		engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
 
+<<<<<<< HEAD
 			updateControlValuesFromGamepad(controlValues);
 
 			// If any steering overrides are happening
@@ -112,10 +117,49 @@ export class Tank {
 					return e;
 				}) as Engines;
 			}
+=======
+		updateControlValuesFromGamepad();
+		// If any steering overrides are happening
+		if (Object.values(controlValues).some((v) => v !== 0)) {
+			engines = [0, 0, 0, 0, 0, 0];
+
+			engines = engines.map((e, i) => {
+				if (i % 2 === 0) {
+					e += controlValues.forward;
+					e -= controlValues.backward;
+					e += controlValues.left;
+					e -= controlValues.right;
+				} else {
+					e += controlValues.forward;
+					e -= controlValues.backward;
+					e -= controlValues.left;
+					e += controlValues.right;
+				}
+				return e;
+			}) as Engines;
+>>>>>>> parent of 09f4be2 (fix: :bug: Fix bugs)
 		}
 		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		return { engines };
 	}
+}
+
+function updateControlValuesFromGamepad() {
+	const gamepad = navigator.getGamepads()?.[0];
+	const buttons = gamepad?.buttons;
+	const aButtonPressed = buttons?.[0]?.pressed;
+	const xButtonPressed = buttons?.[2]?.pressed;
+	const axes = gamepad?.axes;
+
+	if (!axes) return;
+
+	const vertical = axes[1];
+	const horizontal = axes[0];
+
+	controlValues.forward = aButtonPressed ? 1 : Math.max(0, -vertical);
+	controlValues.backward = xButtonPressed ? 1 : Math.max(0, vertical);
+	controlValues.left = Math.max(0, -horizontal);
+	controlValues.right = Math.max(0, horizontal);
 }
 
 const controlMapping: Record<keyof typeof controlValues, string[]> = {
