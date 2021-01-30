@@ -1,4 +1,4 @@
-import { clamp, getEngineForceToTravelDistance, turnVehicle } from './util/functions';
+import { clamp, getEngineForceToTravelDistance, turnVehicle, avoidObstacles } from './util/functions';
 
 import { Navigator } from './Navigator';
 import { MCU } from './MCU';
@@ -35,7 +35,7 @@ export class Tank {
 			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
 		}
 
-		// TODO: Impmenet logic to avoid obstacles
+		engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.position, this.navigator.currentDestination);
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
@@ -56,10 +56,8 @@ export class Tank {
 				}
 				return e;
 			}) as Engines;
-
-			engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		}
-
+		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		return { engines };
 	}
 }

@@ -11,8 +11,10 @@ import { getPointsDistancesAscending } from './getPointsDistancesAscending';
 import { geographicMidpointWithWeights } from './geographicMidpointWithWeights';
 import { geographicMidpointWithoutWeights } from './geographicMidpointWithoutWeights';
 import { turnVehicleWithSteering } from './turnVehicleWithSteering';
+import { avoidObstacles } from './avoidObstacles';
 
 export {
+	avoidObstacles,
 	getEngineForceToTravelDistance,
 	mapEngineValues,
 	turnVehicle,
