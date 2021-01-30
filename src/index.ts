@@ -2,12 +2,12 @@ import { Rover } from './Rover';
 import { Tank } from './Tank';
 import { MCU } from './MCU';
 import { Navigator } from './Navigator';
-import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, LocationOfInterest, RoverType } from 'rover';
+import { ControlLoop, Simulation, AUTHENTICITY_LEVEL0, LocationOfInterest, VehicleType } from 'rover';
 import LatLon from 'geodesy/latlon-spherical';
 
 import { Rectangle } from './types';
 
-const roverType = RoverType.tank; // Determins if rover has steering axios
+const vehicleType = VehicleType.Tank; // Determins if rover has steering axios
 const origin = new LatLon(52.477050353132384, 13.395281227289209);
 const detectionWidth = 1; // in m
 const destinations: LatLon[] = [];
@@ -30,7 +30,7 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	mcu.updateValues(sensorData);
 
 	// @ts-ignore
-	if (roverType === RoverType.rover) {
+	if (vehicleType === VehicleType.Rover) {
 		return rover.getDrivingValues(engines, steering);
 	} else {
 		return { ...tank.getDrivingValues(engines), steering: [180, 180, 180, 180] };
@@ -48,7 +48,7 @@ const rectangle: LocationOfInterest[] = [
 
 const simulation = new Simulation({
 	loop,
-	roverType,
+	vehicleType,
 	origin: {
 		latitude: 52.477050353132384,
 		longitude: 13.395281227289209,
