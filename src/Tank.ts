@@ -1,15 +1,10 @@
-<<<<<<< HEAD
 import {
 	clamp,
 	getEngineForceToTravelDistance,
 	turnVehicle,
 	avoidObstacles,
-	updateControlValuesFromGamepad,
 	signedAngleDifference,
 } from './util/functions';
-=======
-import { clamp, getEngineForceToTravelDistance, turnVehicle, avoidObstacles } from './util/functions';
->>>>>>> parent of 09f4be2 (fix: :bug: Fix bugs)
 
 import { Navigator } from './Navigator';
 import { MCU } from './MCU';
@@ -93,10 +88,9 @@ export class Tank {
 				}
 			}
 
-		engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
+			engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
 
-<<<<<<< HEAD
-			updateControlValuesFromGamepad(controlValues);
+			updateControlValuesFromGamepad();
 
 			// If any steering overrides are happening
 			if (Object.values(controlValues).some((v) => v !== 0)) {
@@ -117,27 +111,6 @@ export class Tank {
 					return e;
 				}) as Engines;
 			}
-=======
-		updateControlValuesFromGamepad();
-		// If any steering overrides are happening
-		if (Object.values(controlValues).some((v) => v !== 0)) {
-			engines = [0, 0, 0, 0, 0, 0];
-
-			engines = engines.map((e, i) => {
-				if (i % 2 === 0) {
-					e += controlValues.forward;
-					e -= controlValues.backward;
-					e += controlValues.left;
-					e -= controlValues.right;
-				} else {
-					e += controlValues.forward;
-					e -= controlValues.backward;
-					e -= controlValues.left;
-					e += controlValues.right;
-				}
-				return e;
-			}) as Engines;
->>>>>>> parent of 09f4be2 (fix: :bug: Fix bugs)
 		}
 		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
 		return { engines };

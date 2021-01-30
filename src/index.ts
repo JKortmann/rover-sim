@@ -29,18 +29,6 @@ navigator.addSearchArea(searchArea);
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	mcu.updateValues(sensorData);
 
-	updateVisuals({
-		destination: mcu.destination,
-		nVelocity: mcu.nVelocity,
-		timeDelta: mcu.timeDelta,
-		position: mcu.position,
-		nPosition: mcu.nPosition,
-		nHeading: mcu.nHeading,
-		desiredHeading: mcu.desiredHeading,
-		desiredHeadingDelta: mcu.desiredHeadingDelta,
-		distanceToDestination: mcu.distanceToDestination,
-		lastNPosition: mcu.lastNPosition,
-	});
 	// @ts-ignore
 	if (roverType === RoverType.rover) {
 		return rover.getDrivingValues(engines, steering);
