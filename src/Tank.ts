@@ -35,7 +35,7 @@ export class Tank {
 			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
 		}
 
-		engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
+		engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.position, this.navigator.currentDestination);
 
 		updateControlValuesFromGamepad();
 		// If any steering overrides are happening
