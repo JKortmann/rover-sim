@@ -17,6 +17,11 @@ const controlValues = {
 	right: 0,
 };
 
+const calibrationOptions = {
+	minHeadingDifference: 0.01,
+	engineSpeedIncrease: 0.1,
+};
+
 export class Tank {
 	navigator;
 	mcu;
@@ -24,96 +29,130 @@ export class Tank {
 	minTurningSpeed = 0;
 	minDrivingSpeed = 0;
 	testEngineValue = 0;
+	lastTestEngineValue = 0;
 
 	constructor(navigator: Navigator, mcu: MCU) {
 		this.navigator = navigator;
 		this.mcu = mcu;
 	}
 
-	calibrate(engnies: Engines) {
-		if (this.minTurningSpeed === 0) {
-			// calibrate turning
-			const headingDiff =
-				signedAngleDifference(this.mcu.headingBuffer.previous(), this.mcu.headingBuffer.latest()) || 0;
-			if (Math.abs(headingDiff) < 0.001 && headingDiff !== 0) {
-				this.minTurningSpeed = this.testEngineValue;
-				this.testEngineValue = 0;
-			} else if (headingDiff !== 0) {
-				this.testEngineValue = this.testEngineValue + clamp(headingDiff * 0.1, -0.1, 0.1);
-			} else {
-				this.testEngineValue = this.testEngineValue + 0.1;
-			}
-			console.log(this.testEngineValue);
-			return engnies.map((e, i) => {
-				if (i % 2) {
-					return this.testEngineValue;
-				} else {
-					return -this.testEngineValue;
-				}
-			}) as Engines;
+	private async stopVehicle() {
+		setInterval(() => {
+			if (this.headingDifference === 0) Promise.resolve();
+		}, 50);
+	}
+
+	private get headingDifference() {
+		const previousHeading = this.mcu.headingBuffer.previous();
+		const latestHeading = this.mcu.headingBuffer.latest();
+
+		return signedAngleDifference(previousHeading, latestHeading) || 0;
+	}
+
+	private calibrateTurningSpeed(): Engines {
+		const absoluteHeadingDifference = Math.abs(this.headingDifference);
+		const hasVehicleTurned = absoluteHeadingDifference >= calibrationOptions.minHeadingDifference;
+		const isVehiceStopped = absoluteHeadingDifference === 0;
+
+		console.group('Calibrating turning speed');
+		console.log('hasVehicleTurned', hasVehicleTurned);
+		console.log('absoluteHeadingDifference', absoluteHeadingDifference);
+		console.log('testEngineValue', this.testEngineValue);
+		console.groupEnd();
+
+		if (hasVehicleTurned) {
+			this.minTurningSpeed = this.testEngineValue;
+		}
+
+		if (!hasVehicleTurned && absoluteHeadingDifference > 0) {
+			this.testEngineValue = 0;
+		}
+
+		if (isVehiceStopped) {
+			const newTestEngineValue = this.lastTestEngineValue + calibrationOptions.engineSpeedIncrease;
+
+			this.testEngineValue = newTestEngineValue;
+			this.lastTestEngineValue = newTestEngineValue;
+		}
+
+		return [
+			-this.testEngineValue,
+			this.testEngineValue,
+			-this.testEngineValue,
+			this.testEngineValue,
+			-this.testEngineValue,
+			this.testEngineValue,
+		];
+	}
+
+	calibrate(engines: Engines): Engines {
+		if (!this.minTurningSpeed) {
+			return this.calibrateTurningSpeed();
 		}
 
 		if (this.minDrivingSpeed === 0) {
 			// calibrate driving
 		}
-		this.minTurningSpeed = 1;
+
 		this.minDrivingSpeed = 1;
-		// Start to test diffrent engnie values for truning and driving.
+		// Start to test different engine values for turning and driving.
 
 		// When done set calibrate to true
 		this.state = 'ready';
 
-		return [0, 0, 0, 0, 0, 0] as Engines;
+		return [0, 0, 0, 0, 0, 0];
 	}
 
 	getDrivingValues(engines: Engines) {
 		engines = [0, 0, 0, 0, 0, 0] as Engines;
 
-		if (this.state === 'calibrating') {
-			engines = this.calibrate(engines);
-		} else {
-			// TODO: Implement logic to turn vehicle
+		// TODO: Implement logic to turn vehicle
 
-			if (Math.round(this.mcu.distanceToDestination) > 0) {
-				const engineSpeed = getEngineForceToTravelDistance(this.mcu.distanceToDestination, this.mcu.nVelocity);
-				engines = engines.map(() => engineSpeed) as Engines;
-			}
+		if (Math.round(this.mcu.distanceToDestination) > 0) {
+			const engineSpeed = getEngineForceToTravelDistance(this.mcu.distanceToDestination, this.mcu.nVelocity);
+			engines = engines.map(() => engineSpeed) as Engines;
+		}
 
-			// TODO: Implement logic to drive vehicle
+		// TODO: Implement logic to drive vehicle
 
-			if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
-				if (Math.round(this.mcu.nVelocity) === 0) {
-					engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
-				} else {
-					engines = [0, 0, 0, 0, 0, 0];
-				}
-			}
+		console.log(this.mcu.desiredHeadingDelta);
 
-			engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
+		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
+			// console.log(this.mcu.desiredHeadingDelta, this.mcu.nVelocity, this.mcu.nAngularVelocity);
 
-			updateControlValuesFromGamepad();
-
-			// If any steering overrides are happening
-			if (Object.values(controlValues).some((v) => v !== 0)) {
+			if (Math.round(this.mcu.nVelocity) === 0) {
+				engines = turnVehicle(Math.round(this.mcu.desiredHeadingDelta), this.mcu.nAngularVelocity) as Engines;
+			} else {
 				engines = [0, 0, 0, 0, 0, 0];
-
-				engines = engines.map((e, i) => {
-					if (i % 2 === 0) {
-						e += controlValues.forward;
-						e -= controlValues.backward;
-						e += controlValues.left;
-						e -= controlValues.right;
-					} else {
-						e += controlValues.forward;
-						e -= controlValues.backward;
-						e -= controlValues.left;
-						e += controlValues.right;
-					}
-					return e;
-				}) as Engines;
 			}
 		}
+
+		// engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
+
+		updateControlValuesFromGamepad();
+
+		// If any steering overrides are happening
+		if (Object.values(controlValues).some((v) => v !== 0)) {
+			engines = [0, 0, 0, 0, 0, 0];
+
+			engines = engines.map((e, i) => {
+				if (i % 2 === 0) {
+					e += controlValues.forward;
+					e -= controlValues.backward;
+					e += controlValues.left;
+					e -= controlValues.right;
+				} else {
+					e += controlValues.forward;
+					e -= controlValues.backward;
+					e -= controlValues.left;
+					e += controlValues.right;
+				}
+				return e;
+			}) as Engines;
+		}
+
 		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
+
 		return { engines };
 	}
 }

@@ -14,6 +14,7 @@ export class MCU {
 	// Buffer
 	sensorDataBuffer = new Buffer<SensorValues>(5);
 	velocityBuffer = new Buffer<number>(5);
+	angularVelocityBuffer = new Buffer<number>(5);
 	positionBuffer = new Buffer<LatLon>(10);
 	headingBuffer = new Buffer<number>(25);
 	// Computed Values
@@ -23,6 +24,7 @@ export class MCU {
 	timeDelta = 0;
 	// Nomalized Vales
 	nVelocity = 0;
+	nAngularVelocity = 0;
 	nPosition = new LatLon(0, 0);
 	nHeading = 0;
 	proximity: number[] = [];
@@ -79,11 +81,21 @@ export class MCU {
 			this.desiredHeadingDelta = 0;
 		}
 
+		const previousHeading = this.headingBuffer.previous();
+		const latestHeading = this.headingBuffer.latest();
+
+		const headingDelta = signedAngleDifference(previousHeading, latestHeading) || 0;
+
+		const angularVelocity = headingDelta / (this.timeDelta / 1000);
+
+		this.angularVelocityBuffer.push(angularVelocity);
+
 		const velocity = positionDelta / (this.timeDelta / 1000);
 
 		this.velocityBuffer.push(velocity);
 
 		this.nVelocity = harmonicMean(this.velocityBuffer.values);
+		this.nAngularVelocity = harmonicMean(this.angularVelocityBuffer.values);
 		this.nPosition = geographicMidpointWithoutWeights(this.positionBuffer.values);
 		this.nHeading = harmonicMean(this.headingBuffer.values);
 
