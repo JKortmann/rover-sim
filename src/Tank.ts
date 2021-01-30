@@ -23,7 +23,8 @@ export class Tank {
 	state = 'calibrating';
 	minTurningSpeed = 0;
 	minDrivingSpeed = 0;
-	testEngnieValue = 0;
+	testEngineValue = 0;
+
 	constructor(navigator: Navigator, mcu: MCU) {
 		this.navigator = navigator;
 		this.mcu = mcu;
@@ -35,19 +36,19 @@ export class Tank {
 			const headingDiff =
 				signedAngleDifference(this.mcu.headingBuffer.previous(), this.mcu.headingBuffer.latest()) || 0;
 			if (Math.abs(headingDiff) < 0.001 && headingDiff !== 0) {
-				this.minTurningSpeed = this.testEngnieValue;
-				this.testEngnieValue = 0;
+				this.minTurningSpeed = this.testEngineValue;
+				this.testEngineValue = 0;
 			} else if (headingDiff !== 0) {
-				this.testEngnieValue = this.testEngnieValue + clamp(headingDiff * 0.1, -0.1, 0.1);
+				this.testEngineValue = this.testEngineValue + clamp(headingDiff * 0.1, -0.1, 0.1);
 			} else {
-				this.testEngnieValue = this.testEngnieValue + 0.1;
+				this.testEngineValue = this.testEngineValue + 0.1;
 			}
-			console.log(this.testEngnieValue);
+			console.log(this.testEngineValue);
 			return engnies.map((e, i) => {
 				if (i % 2) {
-					return this.testEngnieValue;
+					return this.testEngineValue;
 				} else {
-					return -this.testEngnieValue;
+					return -this.testEngineValue;
 				}
 			}) as Engines;
 		}
