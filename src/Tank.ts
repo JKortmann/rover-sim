@@ -115,19 +115,11 @@ export class Tank {
 
 		// TODO: Implement logic to drive vehicle
 
-		console.log(this.mcu.desiredHeadingDelta);
-
 		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
-			// console.log(this.mcu.desiredHeadingDelta, this.mcu.nVelocity, this.mcu.nAngularVelocity);
-
-			if (Math.round(this.mcu.nVelocity) === 0) {
-				engines = turnVehicle(Math.round(this.mcu.desiredHeadingDelta), this.mcu.nAngularVelocity) as Engines;
-			} else {
-				engines = [0, 0, 0, 0, 0, 0];
-			}
+			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
 		}
 
-		// engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.desiredHeadingDelta);
+		engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.position, this.navigator.currentDestination);
 
 		updateControlValuesFromGamepad();
 
