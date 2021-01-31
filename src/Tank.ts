@@ -153,7 +153,8 @@ export class Tank {
 			engine = getEngnieSpeedByDistance(distance, this.mcu.nVelocity);
 		}
 
-		const closestPointProximity = Math.min(...this.mcu.proximity);
+		// TODO: Maybe change to a more values
+		const closestPointProximity = this.mcu.proximity[0];
 		if (closestPointProximity < 7 && closestPointProximity < distance) {
 			engine = getEngnieSpeedByDistance(closestPointProximity - 1, this.mcu.nVelocity);
 		}
