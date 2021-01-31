@@ -1,5 +1,4 @@
 import { Engines } from 'rover';
-import { Display } from '../visuals/Display';
 
 interface TurnVehicleArgs {
 	targetRotation: number;

@@ -48,7 +48,8 @@ export class Tank {
 		TankDisplay.next({
 			state: this.state,
 			engines: this.engines,
-			orientationDelta: this.mcu.desiredHeadingDelta.toFixed(5),
+			angularVelocity: this.mcu.nAngularVelocity.toFixed(3),
+			orientationDelta: this.mcu.desiredHeadingDelta.toFixed(4),
 		});
 
 		return this.engines;
@@ -169,16 +170,24 @@ export class Tank {
 
 	alignToAngle(targetRotation: number) {
 		const direction = targetRotation > 0 ? 'right' : 'left';
+		let engine = 0;
 
 		let fasterEngine: number;
 		let slowerEngine: number;
 
-		let speed = 0.84;
-		if (Math.abs(targetRotation) < 15) speed = 0.834;
-		if (Math.abs(targetRotation) < 10) speed = 0.8332;
+		if (this.mcu.nVelocity < 0.1) {
+			// We're standing still
+			engine = 0.84;
+			if (Math.abs(targetRotation) < 15) engine = 0.834;
+			if (Math.abs(targetRotation) < 10) engine = 0.8332;
 
-		fasterEngine = speed;
-		slowerEngine = -speed;
+			fasterEngine = engine;
+			slowerEngine = -engine;
+		} else {
+			// We're driving
+			fasterEngine = this.engines[0];
+			slowerEngine = this.engines[1] / 2;
+		}
 
 		if (direction === 'right') {
 			this.engines = [slowerEngine, fasterEngine, slowerEngine, fasterEngine, slowerEngine, fasterEngine];
@@ -186,7 +195,7 @@ export class Tank {
 			this.engines = [fasterEngine, slowerEngine, fasterEngine, slowerEngine, fasterEngine, slowerEngine];
 		}
 
-		if (Math.abs(targetRotation) < 0.5) {
+		if (Math.abs(targetRotation) < 0.4) {
 			this.state = 'idle';
 		}
 	}

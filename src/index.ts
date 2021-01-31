@@ -62,7 +62,7 @@ const simulation = new Simulation({
 	obstacles: [
 		{ latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5 },
 		{ latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5 },
-		{ latitude: 52.47715035313238, longitude: 13.3952812272892, radius: 2 },
+		{ latitude: 52.47725035313238, longitude: 13.3953812272892, radius: 2 },
 	],
 	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
