@@ -13,6 +13,9 @@ export class Navigator {
 		this.origin = origin;
 		this.destinations = destinations;
 		this.detectionWidth = detectionWidth;
+		if (destinations.length) {
+			this.currentDestinationIndex = 0;
+		}
 	}
 
 	get currentDestination() {

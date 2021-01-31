@@ -8,9 +8,9 @@ import LatLon from 'geodesy/latlon-spherical';
 import { Rectangle } from './types';
 
 const vehicleType = VehicleType.Tank; // Determins if rover has steering axios
-const origin = new LatLon(52.477050353132384, 13.395281227289209);
+const origin = new LatLon(0, 0);
 const detectionWidth = 1; // in m
-const destinations: LatLon[] = [];
+const destinations: LatLon[] = [new LatLon(0.001, 0)];
 const searchArea: Rectangle = [
 	new LatLon(52.47707415932714, 13.39510403573513),
 	new LatLon(52.47707415932714, 13.395281061530113),
@@ -24,7 +24,7 @@ const mcu = new MCU(origin, navigator);
 const rover = new Rover(navigator, mcu);
 const tank = new Tank(navigator, mcu);
 
-navigator.addSearchArea(searchArea);
+//navigator.addSearchArea(searchArea);
 
 const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	mcu.updateValues(sensorData);
@@ -49,21 +49,16 @@ const rectangle: LocationOfInterest[] = [
 const simulation = new Simulation({
 	loop,
 	vehicleType,
-	origin: {
-		latitude: 52.477050353132384,
-		longitude: 13.395281227289209,
-	},
+	origin,
 	element: document.querySelector('main') as HTMLElement,
-	locationsOfInterest: [...rectangle],
+	locationsOfInterest: destinations.map((d, i) => {
+		return { latitude: d.latitude, longitude: d.longitude, label: 'P' + i } as LocationOfInterest;
+	}),
 	renderingOptions: {
 		width: 900,
 		height: 900,
 	},
-	obstacles: [
-		{ latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5 },
-		{ latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5 },
-		{ latitude: 52.47715035313238, longitude: 13.3952812272892, radius: 2 },
-	],
+	obstacles: [{ latitude: 0.0005, longitude: 0, radius: 2 }],
 	physicalConstraints: AUTHENTICITY_LEVEL0,
 });
 

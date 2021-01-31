@@ -151,10 +151,11 @@ export class Tank {
 
 		if (distance <= 30) {
 			engine = getEngnieSpeedByDistance(distance, this.mcu.nVelocity);
-			const closestPointProximity = Math.min(...this.mcu.proximity);
-			if (closestPointProximity < 6 && closestPointProximity < distance) {
-				engine = getEngnieSpeedByDistance(closestPointProximity, this.mcu.nVelocity);
-			}
+		}
+
+		const closestPointProximity = Math.min(...this.mcu.proximity);
+		if (closestPointProximity < 7 && closestPointProximity < distance) {
+			engine = getEngnieSpeedByDistance(closestPointProximity - 1, this.mcu.nVelocity);
 		}
 
 		this.engines = this.toEngineValues(engine);
@@ -196,7 +197,6 @@ export class Tank {
 	circumnavigate() {
 		let engines = this.engines;
 
-		const closestPointProximity = Math.min(...this.mcu.proximity);
 		const closestPointAngle =
 			(360 / this.mcu.proximity.length) * this.mcu.proximity.indexOf(Math.min(...this.mcu.proximity));
 
@@ -209,14 +209,6 @@ export class Tank {
 						turnDirection <
 						0.1 && exitNormalRoutePosition.distanceTo(this.mcu.position) > 0.3
 				: false;
-
-		if (
-			closestPointProximity < 6 &&
-			closestPointProximity > this.minObstacleDistance &&
-			!engines.some((v) => v !== engines[0])
-		) {
-			return [0.6, 0.6, 0.6, 0.6, 0.6, 0.6] as Engines;
-		}
 
 		if (this.isTooCloseForComfort() && !this.passedObstacle) {
 			if (!exitNormalRoutePosition) {
