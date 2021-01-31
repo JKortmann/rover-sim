@@ -18,13 +18,13 @@ let turnDirection: number | undefined;
 
 type TankState = 'idle' | 'aligning' | 'approaching' | 'circumnavigate' | 'manual';
 
-const TankDisplay = new Display({ width: 900, height: 50, container: '#tankContainer' });
+const TankDisplay = new Display({ width: 900, height: 60, container: '#tankContainer' });
 
 export class Tank {
 	navigator;
 	mcu;
 
-	minObstacleDistance = 1;
+	minObstacleDistance = 1.5;
 	passedObstacle = false;
 
 	engines: Engines = [0, 0, 0, 0, 0, 0];
@@ -157,7 +157,7 @@ export class Tank {
 		// TODO: Maybe change to a more values
 		const closestPointProximity = this.mcu.proximity[0];
 		if (closestPointProximity < 7 && closestPointProximity < distance) {
-			engine = getEngnieSpeedByDistance(closestPointProximity - 1, this.mcu.nVelocity);
+			engine = getEngnieSpeedByDistance(closestPointProximity - this.minObstacleDistance, this.mcu.nVelocity);
 		}
 
 		this.engines = this.toEngineValues(engine);
@@ -220,7 +220,7 @@ export class Tank {
 						0.1 && exitNormalRoutePosition.distanceTo(this.mcu.position) > 0.3
 				: false;
 
-		if (this.isTooCloseForComfort() && !this.passedObstacle) {
+		if (!this.passedObstacle) {
 			if (!exitNormalRoutePosition) {
 				exitNormalRoutePosition = this.mcu.position;
 				turnDirection = (closestPointAngle / 90) % 2 < 1 ? 1 : -1;
@@ -242,20 +242,18 @@ export class Tank {
 				}
 				return e;
 			}) as Engines;
-		}
-
-		if (!this.isTooCloseForComfort()) {
-			exitNormalRoutePosition = undefined;
+		} else {
+			this.state = 'idle';
 		}
 
 		this.engines = engines;
-
-		if (!this.isTooCloseForComfort() || this.passedObstacle) {
-			this.state = 'idle';
-		}
 	}
 
 	isTooCloseForComfort() {
+		if (Math.min(...this.mcu.proximity) > this.minObstacleDistance) {
+			this.passedObstacle = false;
+			exitNormalRoutePosition = undefined;
+		}
 		return Math.min(...this.mcu.proximity) < this.minObstacleDistance;
 	}
 }
