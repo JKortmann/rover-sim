@@ -10,10 +10,14 @@ export const avoidObstacles = (
 	proximityArray: number[],
 	position: LatLon,
 	destination: LatLon,
-	minDistanceToObstacle = 4
+	minDistanceToObstacle = 2
 ) => {
 	const closestPointProximity = Math.min(...proximityArray);
 	const closestPointAngle = (360 / proximityArray.length) * proximityArray.indexOf(Math.min(...proximityArray));
+
+	if (closestPointProximity < 6 && closestPointProximity > minDistanceToObstacle) {
+		return [0.6, 0.6, 0.6, 0.6, 0.6, 0.6] as Engines;
+	}
 
 	const isCloseToObstacle = closestPointProximity < minDistanceToObstacle;
 	const passedObstacle =
