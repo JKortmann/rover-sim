@@ -3,6 +3,7 @@ const DISPLAY_CONTAINER = document.getElementById('displayContainer') as HTMLDiv
 export interface CanvasOptions extends Partial<HTMLCanvasElement> {
 	width: number;
 	height: number;
+	container?: string | HTMLElement;
 }
 
 export class Display {
@@ -21,7 +22,13 @@ export class Display {
 
 		this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
 
-		DISPLAY_CONTAINER.appendChild(this.canvas);
+		let container =
+			typeof canvasOptions.container === 'string'
+				? document.querySelector(canvasOptions.container)
+				: canvasOptions.container;
+		container ??= DISPLAY_CONTAINER;
+
+		container.appendChild(this.canvas);
 
 		this.values = {};
 		this.draw();

@@ -27,20 +27,6 @@ const velocityGraph = new Graph(
 	}
 );
 
-const latitudeGraph = new Graph(
-	{ width: 900, height: 100 },
-	{
-		latitude: {
-			color: '#f0f',
-			range: [52.477, 52.478],
-		},
-		nLatitude: {
-			color: '#0ff',
-			range: [52.477, 52.478],
-		},
-	}
-);
-
 const HeadingGraph = new Graph(
 	{ width: 900, height: 360 },
 	{
@@ -207,11 +193,6 @@ export const updateVisuals = (data: VisualData) => {
 		velocity,
 		nVelocity,
 		timeDelta,
-	});
-
-	latitudeGraph.next({
-		latidude: position.latitude,
-		nLatitude: position.latitude,
 	});
 
 	HeadingGraph.next({

@@ -33,7 +33,7 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	if (vehicleType === VehicleType.Rover) {
 		return rover.getDrivingValues(engines, steering);
 	} else {
-		return { ...tank.getDrivingValues(engines), steering: [180, 180, 180, 180] };
+		return { engines: tank.next(engines), steering: [180, 180, 180, 180] };
 	}
 };
 
