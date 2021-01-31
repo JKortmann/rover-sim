@@ -47,7 +47,7 @@ export class Tank {
 
 		TankDisplay.next({
 			state: this.state,
-			engines: this.engines,
+			engines: `left: ${this.engines[0].toFixed(3)}, right: ${this.engines[1].toFixed(3)}`,
 			angularVelocity: this.mcu.nAngularVelocity.toFixed(3),
 			orientationDelta: this.mcu.desiredHeadingDelta.toFixed(4),
 		});
@@ -58,26 +58,17 @@ export class Tank {
 	updateState() {
 		IdleTransition: if (this.state === 'idle') {
 			if (Math.abs(this.mcu.desiredHeadingDelta) > 0.5) {
-				console.log('Setting state to aliginng');
 				this.state = 'aligning';
 				break IdleTransition;
 			}
 
-			if (Math.abs(this.mcu.distanceToDestination) > 0.5) {
+			if (Math.abs(this.mcu.distanceToDestination) > 0.3) {
 				this.state = 'approaching';
 				break IdleTransition;
 			}
 		}
 
-		ApproachingTransition: if (this.state === 'approaching') {
-			if (Math.abs(this.mcu.desiredHeadingDelta) > 2) {
-				this.state = 'aligning';
-				break ApproachingTransition;
-			}
-		}
-
 		if (this.isTooCloseForComfort() && !this.passedObstacle) {
-			console.log('Setting state to circumnavigate');
 			this.state = 'circumnavigate';
 		}
 
@@ -163,7 +154,7 @@ export class Tank {
 		this.engines = this.toEngineValues(engine);
 
 		// Condition when this function is done
-		if (distance < 0.1) {
+		if (distance < 0.1 || Math.abs(this.mcu.desiredHeadingDelta) > 90) {
 			this.state = 'idle';
 		}
 	}
@@ -178,15 +169,14 @@ export class Tank {
 		if (this.mcu.nVelocity < 0.1) {
 			// We're standing still
 			engine = 0.84;
-			if (Math.abs(targetRotation) < 15) engine = 0.834;
-			if (Math.abs(targetRotation) < 10) engine = 0.8332;
+			if (Math.abs(this.mcu.nAngularVelocity) > 7) engine = 0.834;
 
 			fasterEngine = engine;
 			slowerEngine = -engine;
 		} else {
 			// We're driving
-			fasterEngine = this.engines[0];
-			slowerEngine = this.engines[1] / 2;
+			fasterEngine = 0;
+			slowerEngine = 0;
 		}
 
 		if (direction === 'right') {
@@ -195,12 +185,16 @@ export class Tank {
 			this.engines = [fasterEngine, slowerEngine, fasterEngine, slowerEngine, fasterEngine, slowerEngine];
 		}
 
-		if (Math.abs(targetRotation) < 0.4) {
+		if (Math.abs(targetRotation) < 0.2 && this.mcu.nAngularVelocity < 0.01) {
 			this.state = 'idle';
 		}
 	}
 
 	toEngineValues(value: number) {
+		if (value === 0) {
+			return [0, 0, 0, 0, 0, 0] as Engines;
+		}
+
 		return this.engines.map(() => (Math.abs(value) / 2 + 0.5) * (value < 0 ? -1 : 1)) as Engines;
 	}
 
