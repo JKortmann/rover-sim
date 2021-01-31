@@ -15,7 +15,11 @@ export const avoidObstacles = (
 	const closestPointProximity = Math.min(...proximityArray);
 	const closestPointAngle = (360 / proximityArray.length) * proximityArray.indexOf(Math.min(...proximityArray));
 
-	if (closestPointProximity < 6 && closestPointProximity > minDistanceToObstacle) {
+	if (
+		closestPointProximity < 6 &&
+		closestPointProximity > minDistanceToObstacle &&
+		!engines.some((v) => v !== engines[0])
+	) {
 		return [0.6, 0.6, 0.6, 0.6, 0.6, 0.6] as Engines;
 	}
 
