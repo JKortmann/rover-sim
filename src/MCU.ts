@@ -93,7 +93,7 @@ export class MCU {
 		this.nPosition = geographicMidpointWithoutWeights(this.positionBuffer.values);
 		this.nHeading = harmonicMean(this.headingBuffer.values);
 
-		if (this.distanceToDestination < 0.5) {
+		if (this.distanceToDestination < 0.4 && this.nVelocity < 0.2) {
 			this.navigator.reachedCurrentDestination();
 		}
 
