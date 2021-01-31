@@ -12,6 +12,7 @@ import { geographicMidpointWithWeights } from './geographicMidpointWithWeights';
 import { geographicMidpointWithoutWeights } from './geographicMidpointWithoutWeights';
 import { turnVehicleWithSteering } from './turnVehicleWithSteering';
 import { avoidObstacles } from './avoidObstacles';
+import { getEngnieSpeedByDistance } from './getEngnieSpeedByDistance';
 
 export {
 	avoidObstacles,
@@ -28,4 +29,5 @@ export {
 	geographicMidpointWithWeights,
 	geographicMidpointWithoutWeights,
 	turnVehicleWithSteering,
+	getEngnieSpeedByDistance,
 };

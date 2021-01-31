@@ -1,4 +1,4 @@
-import { clamp, mapEngineValues, signedAngleDifference } from './util/functions';
+import { clamp, getEngnieSpeedByDistance, signedAngleDifference } from './util/functions';
 
 import { Navigator } from './Navigator';
 import { MCU } from './MCU';
@@ -149,12 +149,12 @@ export class Tank {
 			engine = 1;
 		}
 
-		if (Math.min(...this.mcu.proximity) < 6 && !this.passedObstacle) {
-			engine = 0.6;
-		}
-
 		if (distance <= 30) {
-			engine = mapEngineValues(Math.tanh(distance - this.mcu.nVelocity * (this.mcu.nVelocity / 2)));
+			engine = getEngnieSpeedByDistance(distance, this.mcu.nVelocity);
+			const closestPointProximity = Math.min(...this.mcu.proximity);
+			if (closestPointProximity < 6 && closestPointProximity < distance) {
+				engine = getEngnieSpeedByDistance(closestPointProximity, this.mcu.nVelocity);
+			}
 		}
 
 		this.engines = this.toEngineValues(engine);
