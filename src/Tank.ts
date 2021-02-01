@@ -147,14 +147,30 @@ export class Tank {
 
 		// TODO: Maybe change to a more values
 		const closestPointProximity = this.mcu.proximity[0];
-		if (closestPointProximity < 7 && closestPointProximity < distance) {
+		if (this.hasObstacleAhead(7) && closestPointProximity < distance) {
 			engine = getEngnieSpeedByDistance(closestPointProximity - this.minObstacleDistance, this.mcu.nVelocity);
 		}
 
 		this.engines = this.toEngineValues(engine);
 
-		// Condition when this function is done
-		if (distance < 0.1 || Math.abs(this.mcu.desiredHeadingDelta) > 90) {
+		if (Math.abs(this.mcu.desiredHeadingDelta) > 1) {
+			this.engines = this.engines.map((e, i) => {
+				if (Math.sign(this.mcu.desiredHeadingDelta) === 1) {
+					if (i % 2 !== 1) {
+						return e / 4;
+					}
+					return e;
+				} else {
+					if (i % 2 !== 1) {
+						return e;
+					}
+					return e / 4;
+				}
+			}) as Engines;
+		}
+
+		if (distance < 0.1 || Math.abs(this.mcu.desiredHeadingDelta) > 2) {
+			// Condition when this function is done
 			this.state = 'idle';
 		}
 	}
@@ -166,7 +182,7 @@ export class Tank {
 		let fasterEngine: number;
 		let slowerEngine: number;
 
-		if (this.mcu.nVelocity < 0.1) {
+		if (Math.abs(this.mcu.nVelocity) < 0.1) {
 			// We're standing still
 			engine = 0.84;
 			if (Math.abs(this.mcu.nAngularVelocity) > 7) engine = 0.834;
@@ -175,8 +191,8 @@ export class Tank {
 			slowerEngine = -engine;
 		} else {
 			// We're driving
-			fasterEngine = 0;
-			slowerEngine = 0;
+			fasterEngine = -Math.sign(this.mcu.nVelocity);
+			slowerEngine = -Math.sign(this.mcu.nVelocity);
 		}
 
 		if (direction === 'right') {
@@ -246,7 +262,7 @@ export class Tank {
 		this.engines = engines;
 	}
 
-	hasObstacleAhead() {
+	hasObstacleAhead(distance: number = this.minObstacleDistance) {
 		const degreesPerProximityUnit = 360 / this.mcu.proximity.length;
 		const proximityAhead: number[] = [];
 		this.mcu.proximity.forEach((p, i) => {
@@ -254,7 +270,7 @@ export class Tank {
 				proximityAhead.push(p);
 			}
 		});
-		return Math.min(...proximityAhead) < this.minObstacleDistance;
+		return Math.min(...proximityAhead) < distance;
 	}
 }
 
