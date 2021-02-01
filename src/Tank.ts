@@ -155,13 +155,13 @@ export class Tank {
 
 		if (Math.abs(this.mcu.desiredHeadingDelta) > 1) {
 			this.engines = this.engines.map((e, i) => {
-				if (Math.sign(this.mcu.desiredHeadingDelta)) {
-					if (i % 2) {
+				if (Math.sign(this.mcu.desiredHeadingDelta) === 1) {
+					if (i % 2 !== 1) {
 						return e / 4;
 					}
 					return e;
 				} else {
-					if (i % 2) {
+					if (i % 2 !== 1) {
 						return e;
 					}
 					return e / 4;
@@ -182,20 +182,17 @@ export class Tank {
 		let fasterEngine: number;
 		let slowerEngine: number;
 
-		if (Math.abs(this.mcu.nVelocity) <= 0.1) {
+		if (Math.abs(this.mcu.nVelocity) < 0.1) {
 			// We're standing still
 			engine = 0.84;
 			if (Math.abs(this.mcu.nAngularVelocity) > 7) engine = 0.834;
 
 			fasterEngine = engine;
 			slowerEngine = -engine;
-		} else if (this.mcu.nVelocity > 0.1) {
-			// We're driving
-			fasterEngine = -1;
-			slowerEngine = -1;
 		} else {
-			fasterEngine = 1;
-			slowerEngine = 1;
+			// We're driving
+			fasterEngine = -Math.sign(this.mcu.nVelocity);
+			slowerEngine = -Math.sign(this.mcu.nVelocity);
 		}
 
 		if (direction === 'right') {
