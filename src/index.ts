@@ -33,7 +33,7 @@ const loop: ControlLoop = (sensorData, { engines, steering }) => {
 	if (vehicleType === VehicleType.Rover) {
 		return rover.getDrivingValues(engines, steering);
 	} else {
-		return { ...tank.getDrivingValues(engines), steering: [180, 180, 180, 180] };
+		return { engines: tank.next(engines), steering: [180, 180, 180, 180] };
 	}
 };
 
@@ -60,9 +60,8 @@ const simulation = new Simulation({
 		height: 900,
 	},
 	obstacles: [
-		{ latitude: 52.47707415932714, longitude: 13.39510403573513, radius: 0.5 },
-		{ latitude: 52.47707415932714, longitude: 13.39559403573513, radius: 0.5 },
-		{ latitude: 52.47715035313238, longitude: 13.3952812272892, radius: 2 },
+		{ latitude: 52.47715035313238, longitude: 13.3951712272892, radius: 2 },
+		{ latitude: 52.47713035313238, longitude: 13.3951912272892, radius: 1.7 },
 	],
 	physicalConstraints: AUTHENTICITY_LEVEL0,
 });

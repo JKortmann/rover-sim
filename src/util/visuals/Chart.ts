@@ -17,6 +17,8 @@ export class Chart {
 			this.canvas[key] = value;
 		});
 
+		const chartDefaults = {};
+
 		this.context = this.canvas.getContext('2d') as CanvasRenderingContext2D;
 
 		CANVAS_CONTAINER.appendChild(this.canvas);

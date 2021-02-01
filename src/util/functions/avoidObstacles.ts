@@ -15,6 +15,7 @@ export const avoidObstacles = (
 	const closestPointProximity = Math.min(...proximityArray);
 	const closestPointAngle = (360 / proximityArray.length) * proximityArray.indexOf(Math.min(...proximityArray));
 
+	// Slow down if close and we shouldn't turn
 	if (
 		closestPointProximity < 6 &&
 		closestPointProximity > minDistanceToObstacle &&

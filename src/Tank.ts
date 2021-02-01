@@ -1,8 +1,10 @@
-import { clamp, getEngineForceToTravelDistance, turnVehicle, avoidObstacles } from './util/functions';
+import { clamp, getEngnieSpeedByDistance, signedAngleDifference } from './util/functions';
 
 import { Navigator } from './Navigator';
 import { MCU } from './MCU';
 import { Engines } from 'rover';
+import LatLon from 'geodesy/latlon-spherical';
+import { Display } from './util/visuals/Display';
 
 const controlValues = {
 	forward: 0,
@@ -11,54 +13,248 @@ const controlValues = {
 	right: 0,
 };
 
+type TankState = 'idle' | 'aligning' | 'approaching' | 'circumnavigate' | 'manual';
+
+const TankDisplay = new Display({ width: 900, height: 60, container: '#tankContainer' });
+
 export class Tank {
 	navigator;
 	mcu;
+
+	minObstacleDistance = 1.5;
+	isAviodingObstacle = false;
+
+	engines: Engines = [0, 0, 0, 0, 0, 0];
+	state: TankState = 'idle';
+
+	exitNormalRoutePosition: LatLon | undefined;
+	turnDirection: number | undefined;
+
+	manualControlTimeout: number | null = null;
+
 	constructor(navigator: Navigator, mcu: MCU) {
 		this.navigator = navigator;
 		this.mcu = mcu;
 	}
 
-	getDrivingValues(engines: Engines) {
-		engines = [0, 0, 0, 0, 0, 0] as Engines;
+	next(engines: Engines) {
+		this.engines = engines;
 
-		// TODO: Implement logic to turn vehicle
+		this.updateState();
+		this.updateEngines();
 
-		if (Math.round(this.mcu.distanceToDestination) > 0) {
-			const engineSpeed = getEngineForceToTravelDistance(this.mcu.distanceToDestination, this.mcu.nVelocity);
-			engines = engines.map(() => engineSpeed) as Engines;
+		this.engines = this.engines.map((v) => clamp(v, -1, 1)) as Engines;
+
+		TankDisplay.next({
+			state: this.state,
+			engines: `left: ${this.engines[0].toFixed(3)}, right: ${this.engines[1].toFixed(3)}`,
+			angularVelocity: this.mcu.nAngularVelocity.toFixed(3),
+			orientationDelta: this.mcu.desiredHeadingDelta.toFixed(4),
+		});
+
+		return this.engines;
+	}
+
+	updateState() {
+		IdleTransition: if (this.state === 'idle') {
+			if (Math.abs(this.mcu.desiredHeadingDelta) > 0.5) {
+				this.state = 'aligning';
+				break IdleTransition;
+			}
+
+			if (Math.abs(this.mcu.distanceToDestination) > 0.3) {
+				this.state = 'approaching';
+				break IdleTransition;
+			}
 		}
 
-		// TODO: Implement logic to drive vehicle
-
-		if (Math.round(this.mcu.desiredHeadingDelta) !== 0) {
-			engines = turnVehicle(this.mcu.desiredHeadingDelta) as Engines;
+		if (this.hasObstacleAhead() || this.isAviodingObstacle) {
+			this.state = 'circumnavigate';
 		}
-
-		engines = avoidObstacles(engines, this.mcu.proximity, this.mcu.position, this.navigator.currentDestination);
 
 		updateControlValuesFromGamepad();
-		// If any steering overrides are happening
 		if (Object.values(controlValues).some((v) => v !== 0)) {
-			engines = [0, 0, 0, 0, 0, 0];
+			this.state = 'manual';
 
+			if (this.manualControlTimeout != null) {
+				clearTimeout(this.manualControlTimeout);
+			}
+
+			this.manualControlTimeout = window.setTimeout(() => {
+				if (this.state === 'manual') {
+					this.state = 'idle';
+				}
+			}, 1000);
+		}
+
+		this.updateEngines();
+	}
+
+	manualControl() {
+		const engines = [0, 0, 0, 0, 0, 0];
+
+		this.engines = engines.map((e, i) => {
+			if (i % 2 === 0) {
+				e += controlValues.forward;
+				e -= controlValues.backward;
+				e += controlValues.left;
+				e -= controlValues.right;
+			} else {
+				e += controlValues.forward;
+				e -= controlValues.backward;
+				e -= controlValues.left;
+				e += controlValues.right;
+			}
+			return e;
+		}) as Engines;
+	}
+
+	updateEngines() {
+		switch (this.state) {
+			case 'aligning': {
+				this.alignToAngle(this.mcu.desiredHeadingDelta);
+				break;
+			}
+			case 'approaching': {
+				this.travelDistance(this.mcu.distanceToDestination);
+				break;
+			}
+			case 'circumnavigate': {
+				this.circumnavigate();
+				break;
+			}
+			case 'manual': {
+				this.manualControl();
+				break;
+			}
+			default: {
+				this.engines = this.toEngineValues(0);
+				break;
+			}
+		}
+	}
+
+	travelDistance(distance: number) {
+		let engine = 0;
+
+		if (distance > 30) {
+			engine = 1;
+		}
+
+		if (distance <= 30) {
+			engine = getEngnieSpeedByDistance(distance, this.mcu.nVelocity);
+		}
+
+		// TODO: Maybe change to a more values
+		const closestPointProximity = this.mcu.proximity[0];
+		if (closestPointProximity < 7 && closestPointProximity < distance) {
+			engine = getEngnieSpeedByDistance(closestPointProximity - this.minObstacleDistance, this.mcu.nVelocity);
+		}
+
+		this.engines = this.toEngineValues(engine);
+
+		// Condition when this function is done
+		if (distance < 0.1 || Math.abs(this.mcu.desiredHeadingDelta) > 90) {
+			this.state = 'idle';
+		}
+	}
+
+	alignToAngle(targetRotation: number) {
+		const direction = targetRotation > 0 ? 'right' : 'left';
+		let engine = 0;
+
+		let fasterEngine: number;
+		let slowerEngine: number;
+
+		if (this.mcu.nVelocity < 0.1) {
+			// We're standing still
+			engine = 0.84;
+			if (Math.abs(this.mcu.nAngularVelocity) > 7) engine = 0.834;
+
+			fasterEngine = engine;
+			slowerEngine = -engine;
+		} else {
+			// We're driving
+			fasterEngine = 0;
+			slowerEngine = 0;
+		}
+
+		if (direction === 'right') {
+			this.engines = [slowerEngine, fasterEngine, slowerEngine, fasterEngine, slowerEngine, fasterEngine];
+		} else {
+			this.engines = [fasterEngine, slowerEngine, fasterEngine, slowerEngine, fasterEngine, slowerEngine];
+		}
+
+		if (Math.abs(targetRotation) < 0.2 && this.mcu.nAngularVelocity < 0.01) {
+			this.state = 'idle';
+		}
+	}
+
+	toEngineValues(value: number) {
+		if (value === 0) {
+			return [0, 0, 0, 0, 0, 0] as Engines;
+		}
+
+		return this.engines.map(() => (Math.abs(value) / 2 + 0.5) * (value < 0 ? -1 : 1)) as Engines;
+	}
+
+	circumnavigate() {
+		let engines = this.engines;
+
+		const closestPointAngle =
+			(360 / this.mcu.proximity.length) * this.mcu.proximity.indexOf(Math.min(...this.mcu.proximity));
+
+		const passedObstacle =
+			this.exitNormalRoutePosition && this.turnDirection
+				? signedAngleDifference(
+						this.exitNormalRoutePosition.initialBearingTo(this.mcu.position),
+						this.exitNormalRoutePosition.initialBearingTo(this.navigator.currentDestination)
+				  ) *
+						this.turnDirection <
+						0.1 && this.exitNormalRoutePosition.distanceTo(this.mcu.position) > 0.3
+				: false;
+
+		if (!passedObstacle) {
+			if (!this.exitNormalRoutePosition) {
+				this.exitNormalRoutePosition = this.mcu.position;
+				this.turnDirection = (closestPointAngle / 90) % 2 < 1 ? 1 : -1;
+			}
+			this.isAviodingObstacle = true;
+			engines = [0.6, 0.6, 0.6, 0.6, 0.6, 0.6];
 			engines = engines.map((e, i) => {
-				if (i % 2 === 0) {
-					e += controlValues.forward;
-					e -= controlValues.backward;
-					e += controlValues.left;
-					e -= controlValues.right;
-				} else {
-					e += controlValues.forward;
-					e -= controlValues.backward;
-					e -= controlValues.left;
-					e += controlValues.right;
+				if ((closestPointAngle / 90) % 2 > 1) {
+					if (i % 2 === 0) {
+						e -= e;
+					} else {
+						e += e;
+					}
+				} else if ((closestPointAngle / 90) % 2 < 1) {
+					if (i % 2 === 0) {
+						e += e;
+					} else {
+						e -= e;
+					}
 				}
 				return e;
 			}) as Engines;
+		} else {
+			this.exitNormalRoutePosition = undefined;
+			this.isAviodingObstacle = false;
+			this.state = 'idle';
 		}
-		engines = engines.map((v) => clamp(v, -1, 1)) as Engines;
-		return { engines };
+
+		this.engines = engines;
+	}
+
+	hasObstacleAhead() {
+		const degreesPerProximityUnit = 360 / this.mcu.proximity.length;
+		const proximityAhead: number[] = [];
+		this.mcu.proximity.forEach((p, i) => {
+			if (i * degreesPerProximityUnit < 10 || i * degreesPerProximityUnit > 350) {
+				proximityAhead.push(p);
+			}
+		});
+		return Math.min(...proximityAhead) < this.minObstacleDistance;
 	}
 }
 

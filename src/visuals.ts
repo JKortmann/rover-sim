@@ -14,43 +14,15 @@ const velocityGraph = new Graph(
 	{
 		velocity: {
 			color: '#ff0',
-			range: [0, 30],
+			range: [0, 25],
 		},
 		nVelocity: {
 			color: '#f0f',
-			range: [0, 30],
+			range: [0, 25],
 		},
 		timeDelta: {
 			color: '#0ff',
-			range: [10, 30],
-		},
-	}
-);
-
-const latitudeGraph = new Graph(
-	{ width: 900, height: 100 },
-	{
-		latitude: {
-			color: '#f0f',
-			range: [52.477, 52.478],
-		},
-		nLatitude: {
-			color: '#0ff',
-			range: [52.477, 52.478],
-		},
-	}
-);
-
-const HeadingGraph = new Graph(
-	{ width: 900, height: 360 },
-	{
-		Heading: {
-			color: '#f0f',
-			range: [0, 360],
-		},
-		nHeading: {
-			color: '#0ff',
-			range: [0, 360],
+			range: [10, 25],
 		},
 	}
 );
@@ -207,16 +179,6 @@ export const updateVisuals = (data: VisualData) => {
 		velocity,
 		nVelocity,
 		timeDelta,
-	});
-
-	latitudeGraph.next({
-		latidude: position.latitude,
-		nLatitude: position.latitude,
-	});
-
-	HeadingGraph.next({
-		Heading: heading,
-		nHeading,
 	});
 
 	display.next({
