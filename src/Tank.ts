@@ -13,9 +13,6 @@ const controlValues = {
 	right: 0,
 };
 
-let exitNormalRoutePosition: LatLon | undefined;
-let turnDirection: number | undefined;
-
 type TankState = 'idle' | 'aligning' | 'approaching' | 'circumnavigate' | 'manual';
 
 const TankDisplay = new Display({ width: 900, height: 60, container: '#tankContainer' });
@@ -25,10 +22,13 @@ export class Tank {
 	mcu;
 
 	minObstacleDistance = 1.5;
-	passedObstacle = false;
+	isAviodingObstacle = false;
 
 	engines: Engines = [0, 0, 0, 0, 0, 0];
 	state: TankState = 'idle';
+
+	exitNormalRoutePosition: LatLon | undefined;
+	turnDirection: number | undefined;
 
 	manualControlTimeout: number | null = null;
 
@@ -68,7 +68,7 @@ export class Tank {
 			}
 		}
 
-		if (this.isTooCloseForComfort() && !this.passedObstacle) {
+		if (this.hasObstacleAhead() || this.isAviodingObstacle) {
 			this.state = 'circumnavigate';
 		}
 
@@ -204,21 +204,22 @@ export class Tank {
 		const closestPointAngle =
 			(360 / this.mcu.proximity.length) * this.mcu.proximity.indexOf(Math.min(...this.mcu.proximity));
 
-		this.passedObstacle =
-			exitNormalRoutePosition && turnDirection
+		const passedObstacle =
+			this.exitNormalRoutePosition && this.turnDirection
 				? signedAngleDifference(
-						exitNormalRoutePosition.initialBearingTo(this.mcu.position),
-						exitNormalRoutePosition.initialBearingTo(this.navigator.currentDestination)
+						this.exitNormalRoutePosition.initialBearingTo(this.mcu.position),
+						this.exitNormalRoutePosition.initialBearingTo(this.navigator.currentDestination)
 				  ) *
-						turnDirection <
-						0.1 && exitNormalRoutePosition.distanceTo(this.mcu.position) > 0.3
+						this.turnDirection <
+						0.1 && this.exitNormalRoutePosition.distanceTo(this.mcu.position) > 0.3
 				: false;
 
-		if (!this.passedObstacle) {
-			if (!exitNormalRoutePosition) {
-				exitNormalRoutePosition = this.mcu.position;
-				turnDirection = (closestPointAngle / 90) % 2 < 1 ? 1 : -1;
+		if (!passedObstacle) {
+			if (!this.exitNormalRoutePosition) {
+				this.exitNormalRoutePosition = this.mcu.position;
+				this.turnDirection = (closestPointAngle / 90) % 2 < 1 ? 1 : -1;
 			}
+			this.isAviodingObstacle = true;
 			engines = [0.6, 0.6, 0.6, 0.6, 0.6, 0.6];
 			engines = engines.map((e, i) => {
 				if ((closestPointAngle / 90) % 2 > 1) {
@@ -237,18 +238,23 @@ export class Tank {
 				return e;
 			}) as Engines;
 		} else {
+			this.exitNormalRoutePosition = undefined;
+			this.isAviodingObstacle = false;
 			this.state = 'idle';
 		}
 
 		this.engines = engines;
 	}
 
-	isTooCloseForComfort() {
-		if (Math.min(...this.mcu.proximity) > this.minObstacleDistance) {
-			this.passedObstacle = false;
-			exitNormalRoutePosition = undefined;
-		}
-		return Math.min(...this.mcu.proximity) < this.minObstacleDistance;
+	hasObstacleAhead() {
+		const degreesPerProximityUnit = 360 / this.mcu.proximity.length;
+		const proximityAhead: number[] = [];
+		this.mcu.proximity.forEach((p, i) => {
+			if (i * degreesPerProximityUnit < 10 || i * degreesPerProximityUnit > 350) {
+				proximityAhead.push(p);
+			}
+		});
+		return Math.min(...proximityAhead) < this.minObstacleDistance;
 	}
 }
 
